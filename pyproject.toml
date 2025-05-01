@@ -5,3 +5,9 @@ description = "The Python client for RDF4J"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "ruff>=0.11.8",
+]
