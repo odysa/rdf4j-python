@@ -1,5 +1,5 @@
-from utils.const import Rdf4jContentType
-from client.client import AsyncApiClient
+from rdf4j_python import AsyncApiClient
+from rdf4j_python.utils.const import Rdf4jContentType
 
 
 class AsyncRepository:

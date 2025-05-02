@@ -1,10 +1,14 @@
+from typing import Union
+
 import httpx
-from async_repository import AsyncRepository
-from client.client import AsyncApiClient
-from utils.const import Rdf4jContentType
+
+from rdf4j_python import AsyncApiClient
+from rdf4j_python.utils.const import Rdf4jContentType
+
+from ._async_repository import AsyncRepository
 
 
-class AsyncRdf4jStore:
+class AsyncRdf4jDB:
     _client: AsyncApiClient
     _base_url: str
 
@@ -26,6 +30,7 @@ class AsyncRdf4jStore:
     async def list_repositories(self):
         """
         List all RDF4J repositories.
+
         :return: List of repository IDs.
         """
         response = await self._client.get("/repositories")
@@ -35,13 +40,19 @@ class AsyncRdf4jStore:
         return response.text
 
     def get_repository(self, repository_id: str) -> AsyncRepository:
+        """
+        Get an AsyncRepository instance for the specified repository ID.
+
+        :param repository_id: The ID of the repository.
+        :return: An instance of AsyncRepository.
+        """
         return AsyncRepository(self._client, repository_id)
 
     async def create_repository(
         self,
         repository_id: str,
         rdf_config_data: str,
-        content_type: Rdf4jContentType = Rdf4jContentType.TURTLE,
+        content_type: Union[Rdf4jContentType, str] = Rdf4jContentType.TURTLE,
     ):
         """
         Create a new RDF4J repository.
@@ -51,11 +62,15 @@ class AsyncRdf4jStore:
         :param content_type: MIME type of RDF config.
         """
         path = f"/repositories/{repository_id}"
-        headers = {"Content-Type": content_type.value}
+
+        if isinstance(content_type, Rdf4jContentType):
+            content_type = content_type.value
+        headers = {"Content-Type": content_type}
+
         response: httpx.Response = await self._client.put(
             path, data=rdf_config_data, headers=headers
         )
-        if response.status_code != httpx.codes.CREATED:
+        if response.status_code != httpx.codes.NO_CONTENT.value:
             raise Exception(
                 f"Repository creation failed: {response.status_code} - {response.text}"
             )
