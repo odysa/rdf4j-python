@@ -1,6 +1,7 @@
 from typing import Union
 
 import httpx
+import rdflib
 
 from rdf4j_python import AsyncApiClient
 from rdf4j_python.utils.const import Rdf4jContentType
@@ -33,11 +34,16 @@ class AsyncRdf4jDB:
 
         :return: List of repository IDs.
         """
-        response = await self._client.get("/repositories")
-        content_type = response.headers.get("Content-Type", "")
-        if Rdf4jContentType.SPARQL_RESULTS_JSON in content_type:
-            return response.json()
-        return response.text
+        response = await self._client.get(
+            "/repositories",
+            headers={"Accept": Rdf4jContentType.SPARQL_RESULTS_JSON},
+        )
+        result = rdflib.query.Result.parse(
+            response, format=Rdf4jContentType.SPARQL_RESULTS_JSON
+        )
+        for binding in result.bindings:
+            print(binding)
+        return response.json()
 
     def get_repository(self, repository_id: str) -> AsyncRepository:
         """

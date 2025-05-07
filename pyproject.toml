@@ -6,6 +6,8 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "httpx>=0.28.1",
+    "rdflib>=7.1.4",
+    "sparqlwrapper>=2.0.0",
 ]
 
 [dependency-groups]

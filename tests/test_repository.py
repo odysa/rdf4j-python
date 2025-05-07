@@ -1,16 +1,15 @@
 import pytest
 
-from rdf4j_python import AsyncRdf4jDB, AsyncRepository
+from rdf4j_python import AsyncRdf4jDB
 from rdf4j_python.utils.const import Rdf4jContentType
 
 
-@pytest.mark.asyncio
-async def test_url(rdf4j_service: str):
-    repo_config = """
+def get_repo_config(name: str):
+    return f"""
         @prefix config: <tag:rdf4j.org,2023:config/>.
 
         [] a config:Repository ;
-        config:rep.id "test-repo" ;
+        config:rep.id "{name}" ;
         config:rep.impl [
             config:rep.type "openrdf:SailRepository" ;
             config:sail.impl [
@@ -18,9 +17,20 @@ async def test_url(rdf4j_service: str):
             ]
         ] .
     """
+
+
+@pytest.mark.asyncio
+async def test_create_repo(rdf4j_service: str):
     async with AsyncRdf4jDB(rdf4j_service) as db:
-        repo: AsyncRepository = await db.create_repository(
+        await db.create_repository(
             repository_id="test-repo",
-            rdf_config_data=repo_config,
+            rdf_config_data=get_repo_config("test-repo"),
             content_type=Rdf4jContentType.TURTLE,
         )
+
+
+@pytest.mark.asyncio
+async def test_list_repos(rdf4j_service: str):
+    async with AsyncRdf4jDB(rdf4j_service) as db:
+        repos = await db.list_repositories()
+        print(repos)
