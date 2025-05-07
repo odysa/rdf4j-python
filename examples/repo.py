@@ -1,4 +1,5 @@
 import asyncio
+import textwrap
 
 from rdf4j_python import AsyncRdf4jDB
 
@@ -11,7 +12,8 @@ async def main():
         version = await db.get_protocol_version()
         print("Protocol Version:", version)
 
-        repo_config = """
+        repo_config = textwrap.dedent(
+            """
             @prefix config: <tag:rdf4j.org,2023:config/>.
             [] a config:Repository ;
             config:rep.id "example-repo" ;
@@ -22,6 +24,7 @@ async def main():
                 ]
             ] .
         """
+        )
         await db.create_repository(
             repository_id="example-repo",
             rdf_config_data=repo_config,
