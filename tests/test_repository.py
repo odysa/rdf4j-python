@@ -22,15 +22,50 @@ def get_repo_config(name: str):
 @pytest.mark.asyncio
 async def test_create_repo(rdf4j_service: str):
     async with AsyncRdf4jDB(rdf4j_service) as db:
+        repo_id = "test_create_repo"
         await db.create_repository(
-            repository_id="test-repo",
-            rdf_config_data=get_repo_config("test-repo"),
+            repository_id=repo_id,
+            rdf_config_data=get_repo_config(repo_id),
             content_type=Rdf4jContentType.TURTLE,
         )
+        repos = await db.list_repositories()
+        assert len(repos) == 1
+        assert repos[0].id == repo_id
+        await db.delete_repository(repo_id)
+
+
+@pytest.mark.asyncio
+async def test_delete_repo(rdf4j_service: str):
+    async with AsyncRdf4jDB(rdf4j_service) as db:
+        repo_id = "test_delete_repo"
+        await db.create_repository(
+            repository_id=repo_id,
+            rdf_config_data=get_repo_config(repo_id),
+            content_type=Rdf4jContentType.TURTLE,
+        )
+        repos = await db.list_repositories()
+        assert len(repos) == 1
+        assert repos[0].id == repo_id
+        await db.delete_repository(repo_id)
+        repos = await db.list_repositories()
+        assert len(repos) == 0
 
 
 @pytest.mark.asyncio
 async def test_list_repos(rdf4j_service: str):
     async with AsyncRdf4jDB(rdf4j_service) as db:
+        repo_count = 10
         repos = await db.list_repositories()
-        print(repos)
+        assert len(repos) == 0
+        for repo in range(repo_count):
+            repo_id = f"test_list_repos_{repo}"
+            await db.create_repository(
+                repository_id=repo_id,
+                rdf_config_data=get_repo_config(repo_id),
+                content_type=Rdf4jContentType.TURTLE,
+            )
+        repos = await db.list_repositories()
+        assert len(repos) == repo_count
+        for repo in range(repo_count):
+            repo_id = f"test_list_repos_{repo}"
+            assert repo_id in [repo.id for repo in repos]

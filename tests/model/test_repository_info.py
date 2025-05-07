@@ -2,7 +2,7 @@ import pytest
 import rdflib
 from rdflib.term import Literal, URIRef, Variable
 
-from rdf4j_python.model.repository import Repository
+from rdf4j_python.model.repository import RepositoryInfo
 
 
 @pytest.fixture
@@ -39,7 +39,7 @@ def partial_result():
 
 def test_from_rdflib_valid(valid_result: rdflib.query.Result):
     for binding in valid_result.bindings:
-        repo = Repository.from_rdflib(binding)
+        repo = RepositoryInfo.from_rdflib_binding(binding)
         assert repo.id == "example-repo" + str(binding[Variable("id")].value[-1])
         assert repo.title == "example-repo" + str(binding[Variable("id")].value[-1])
         assert (
@@ -52,7 +52,7 @@ def test_from_rdflib_valid(valid_result: rdflib.query.Result):
 
 
 def test_from_rdflib_partial(partial_result: rdflib.query.Result):
-    repo = Repository.from_rdflib(partial_result.bindings[0])
+    repo = RepositoryInfo.from_rdflib_binding(partial_result.bindings[0])
     assert repo.id == "partial-repo"
     assert repo.title == "partial-repo"
     assert repo.uri == ""
@@ -62,7 +62,7 @@ def test_from_rdflib_partial(partial_result: rdflib.query.Result):
 
 def test_str_representation(valid_result: rdflib.query.Result):
     for binding in valid_result.bindings:
-        repo = Repository.from_rdflib(binding)
+        repo = RepositoryInfo.from_rdflib_binding(binding)
         assert (
             str(repo) == f"Repository(id={repo.id}, title={repo.title}, uri={repo.uri})"
         )

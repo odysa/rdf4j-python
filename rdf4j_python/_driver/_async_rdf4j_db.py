@@ -4,6 +4,7 @@ import httpx
 import rdflib
 
 from rdf4j_python import AsyncApiClient
+from rdf4j_python.model.repository import RepositoryInfo
 from rdf4j_python.utils.const import Rdf4jContentType
 
 from ._async_repository import AsyncRepository
@@ -28,11 +29,11 @@ class AsyncRdf4jDB:
         response.raise_for_status()
         return response.text
 
-    async def list_repositories(self):
+    async def list_repositories(self) -> list[RepositoryInfo]:
         """
         List all RDF4J repositories.
 
-        :return: List of repository IDs.
+        :return: List of repository information.
         """
         response = await self._client.get(
             "/repositories",
@@ -41,11 +42,12 @@ class AsyncRdf4jDB:
         result = rdflib.query.Result.parse(
             response, format=Rdf4jContentType.SPARQL_RESULTS_JSON
         )
-        for binding in result.bindings:
-            print(binding)
-        return response.json()
 
-    def get_repository(self, repository_id: str) -> AsyncRepository:
+        return [
+            RepositoryInfo.from_rdflib_binding(binding) for binding in result.bindings
+        ]
+
+    async def get_repository(self, repository_id: str) -> AsyncRepository:
         """
         Get an AsyncRepository instance for the specified repository ID.
 
@@ -74,9 +76,9 @@ class AsyncRdf4jDB:
         headers = {"Content-Type": content_type}
 
         response: httpx.Response = await self._client.put(
-            path, data=rdf_config_data, headers=headers
+            path, content=rdf_config_data, headers=headers
         )
-        if response.status_code != httpx.codes.NO_CONTENT.value:
+        if response.status_code != httpx.codes.NO_CONTENT:
             raise Exception(
                 f"Repository creation failed: {response.status_code} - {response.text}"
             )
@@ -89,7 +91,7 @@ class AsyncRdf4jDB:
         """
         path = f"/repositories/{repository_id}"
         response = await self._client.delete(path)
-        if response.status_code != 204:
+        if response.status_code != httpx.codes.NO_CONTENT:
             raise Exception(
                 f"Failed to delete repository '{repository_id}': {response.status_code} - {response.text}"
             )

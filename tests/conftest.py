@@ -10,7 +10,7 @@ def is_responsive(url: str) -> bool:
     try:
         LOGGER.info(f"awaiting for docker {url} to be responsive....")
         response = httpx.get(url + "/protocol", timeout=2.0)
-        if response.status_code == 200:
+        if response.status_code == httpx.codes.OK:
             LOGGER.info(f"docker {url} is responsive")
             return True
     except Exception:

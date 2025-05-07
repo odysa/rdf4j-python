@@ -10,7 +10,6 @@ async def main():
 
         version = await db.get_protocol_version()
         print("Protocol Version:", version)
-        await db.delete_repository("example-repo")
 
         repo_config = """
             @prefix config: <tag:rdf4j.org,2023:config/>.

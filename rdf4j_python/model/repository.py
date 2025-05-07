@@ -7,9 +7,9 @@ from ._base_model import _BaseModel
 
 
 @dataclass
-class Repository(_BaseModel):
+class RepositoryInfo(_BaseModel):
     """
-    Represents a repository in RDF4J.
+    Represents a repository information RDF4J.
     """
 
     id: str  # The repository identifier
@@ -23,7 +23,9 @@ class Repository(_BaseModel):
         return f"Repository(id={self.id}, title={self.title}, uri={self.uri})"
 
     @classmethod
-    def from_rdflib(cls, result: Mapping[Variable, Identifier]) -> "Repository":
+    def from_rdflib_binding(
+        cls, result: Mapping[Variable, Identifier]
+    ) -> "RepositoryInfo":
         """
         Create a Repository instance from a SPARQL query result
         represented as a Mapping from rdflib Variables to Identifiers.
@@ -31,9 +33,9 @@ class Repository(_BaseModel):
 
         # Construct and return the Repository object
         return cls(
-            id=super().get_literal(result, "id", ""),
-            uri=super().get_uri(result, "uri", ""),
-            title=super().get_literal(result, "id", ""),
-            readable=super().get_literal(result, "readable", False),
-            writable=super().get_literal(result, "writable", False),
+            id=_BaseModel.get_literal(result, "id", ""),
+            uri=_BaseModel.get_uri(result, "uri", ""),
+            title=_BaseModel.get_literal(result, "id", ""),
+            readable=_BaseModel.get_literal(result, "readable", False),
+            writable=_BaseModel.get_literal(result, "writable", False),
         )
