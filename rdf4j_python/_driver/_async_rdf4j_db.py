@@ -4,6 +4,10 @@ import httpx
 import rdflib
 
 from rdf4j_python import AsyncApiClient
+from rdf4j_python.expcetion.repo_expcetion import (
+    RepositoryCreationException,
+    RepositoryDeletionException,
+)
 from rdf4j_python.model.repository import RepositoryInfo
 from rdf4j_python.utils.const import Rdf4jContentType
 
@@ -79,7 +83,7 @@ class AsyncRdf4jDB:
             path, content=rdf_config_data, headers=headers
         )
         if response.status_code != httpx.codes.NO_CONTENT:
-            raise Exception(
+            raise RepositoryCreationException(
                 f"Repository creation failed: {response.status_code} - {response.text}"
             )
 
@@ -92,6 +96,6 @@ class AsyncRdf4jDB:
         path = f"/repositories/{repository_id}"
         response = await self._client.delete(path)
         if response.status_code != httpx.codes.NO_CONTENT:
-            raise Exception(
+            raise RepositoryDeletionException(
                 f"Failed to delete repository '{repository_id}': {response.status_code} - {response.text}"
             )
