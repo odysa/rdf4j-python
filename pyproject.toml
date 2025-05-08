@@ -4,10 +4,18 @@ version = "0.1.0"
 description = "The Python client for RDF4J"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = ["httpx>=0.28.1", "rdflib>=7.1.4"]
 
 [dependency-groups]
 dev = [
     "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0",
+    "pytest-docker>=3.2.1",
     "ruff>=0.11.8",
 ]
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
