@@ -4,7 +4,7 @@ import httpx
 import rdflib
 
 from rdf4j_python import AsyncApiClient
-from rdf4j_python.expcetion.repo_expcetion import (
+from rdf4j_python.expcetion.repo_exception import (
     RepositoryCreationException,
     RepositoryDeletionException,
 )
