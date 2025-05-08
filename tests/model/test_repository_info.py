@@ -11,6 +11,7 @@ def valid_result():
     result._bindings = [
         {
             Variable("id"): Literal("example-repo" + str(i)),
+            Variable("title"): Literal("example-repo" + str(i)),
             Variable("uri"): URIRef(
                 "http://localhost:19780/rdf4j-server/repositories/example-repo" + str(i)
             ),
@@ -32,6 +33,7 @@ def partial_result():
     result._bindings = [
         {
             Variable("id"): Literal("partial-repo"),
+            Variable("title"): Literal("partial-repo"),
         }
     ]
     return result

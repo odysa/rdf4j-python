@@ -35,7 +35,7 @@ class RepositoryInfo(_BaseModel):
         return cls(
             id=_BaseModel.get_literal(result, "id", ""),
             uri=_BaseModel.get_uri(result, "uri", ""),
-            title=_BaseModel.get_literal(result, "id", ""),
+            title=_BaseModel.get_literal(result, "title", ""),
             readable=_BaseModel.get_literal(result, "readable", False),
             writable=_BaseModel.get_literal(result, "writable", False),
         )
