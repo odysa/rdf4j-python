@@ -3,7 +3,6 @@ from rdflib import Graph
 from rdflib.compare import isomorphic
 
 from rdf4j_python.model.repository_config import (
-    ContextAwareRepositoryConfig,
     DatasetRepositoryConfig,
     ElasticsearchStoreConfig,
     HTTPRepositoryConfig,
@@ -33,7 +32,7 @@ def assert_isomorphic(turtle1: str, turtle2: str):
 
 class TestRepositoryConfig:
     def test_minimal_config(self):
-        config = RepositoryConfig.Builder(rep_id="test_repo").build()
+        config = RepositoryConfig.Builder(repo_id="test_repo").build()
         expected_turtle = """
             @prefix config: <tag:rdf4j.org,2023:config/> .
             [] a config:Repository ;
@@ -43,7 +42,8 @@ class TestRepositoryConfig:
 
     def test_full_config(self):
         memory_store_config = (
-            MemoryStoreConfig.Builder(persist=True)
+            MemoryStoreConfig.Builder()
+            .persist(True)
             .sync_delay(1000)
             .iteration_cache_sync_threshold(5000)
             .default_query_evaluation_mode("STANDARD")
@@ -53,9 +53,9 @@ class TestRepositoryConfig:
             sail_impl=memory_store_config
         ).build()
         config = (
-            RepositoryConfig.Builder(rep_id="full_test_repo")
-            .label("Full Test Repository")
-            .implementation(sail_repo_config)
+            RepositoryConfig.Builder(repo_id="full_test_repo")
+            .title("Full Test Repository")
+            .repo_impl(sail_repo_config)
             .build()
         )
         expected_turtle = """
@@ -86,8 +86,8 @@ class TestRepositoryConfig:
             .build()
         )
         repo_config = (
-            RepositoryConfig.Builder(rep_id="sparql_repo")
-            .implementation(sparql_config)
+            RepositoryConfig.Builder(repo_id="sparql_repo")
+            .repo_impl(sparql_config)
             .build()
         )
         expected_turtle = """
@@ -113,9 +113,7 @@ class TestRepositoryConfig:
             .build()
         )
         repo_config = (
-            RepositoryConfig.Builder(rep_id="http_repo")
-            .implementation(http_config)
-            .build()
+            RepositoryConfig.Builder(repo_id="http_repo").repo_impl(http_config).build()
         )
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -134,7 +132,7 @@ class TestRepositoryConfig:
         assert_isomorphic(repo_config.to_turtle(), expected_turtle)
 
     def test_dataset_repo_config(self):
-        memory_store_config = MemoryStoreConfig.Builder(persist=False).build()
+        memory_store_config = MemoryStoreConfig.Builder().persist(False).build()
         sail_repo_config = SailRepositoryConfig.Builder(
             sail_impl=memory_store_config
         ).build()
@@ -142,8 +140,8 @@ class TestRepositoryConfig:
             delegate=sail_repo_config
         ).build()
         repo_config = (
-            RepositoryConfig.Builder(rep_id="dataset_repo")
-            .implementation(dataset_config)
+            RepositoryConfig.Builder(repo_id="dataset_repo")
+            .repo_impl(dataset_config)
             .build()
         )
 
@@ -167,42 +165,6 @@ class TestRepositoryConfig:
         """
         assert_isomorphic(repo_config.to_turtle(), expected_turtle)
 
-    def test_context_aware_repo_config(self):
-        http_repo_config = HTTPRepositoryConfig.Builder(
-            url="http://example.com/rdf4j"
-        ).build()
-        context_aware_config = (
-            ContextAwareRepositoryConfig.Builder(delegate=http_repo_config)
-            .read_context("http://example.com/context1", "http://example.com/context2")
-            .insert_context("http://example.com/insert_context")
-            .remove_context("http://example.com/remove1", "http://example.com/remove2")
-            .build()
-        )
-        repo_config = (
-            RepositoryConfig.Builder(rep_id="context_aware_repo")
-            .implementation(context_aware_config)
-            .build()
-        )
-        expected_turtle = """
-            @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-            @prefix config: <tag:rdf4j.org,2023:config/> .
-            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-
-            [] a config:Repository ;
-                config:rep.id "context_aware_repo" ;
-                config:rep.impl [
-                    config:rep.type "openrdf:ContextAwareRepository" ;
-                    config:delegate [
-                        config:rep.type "openrdf:HTTPRepository" ;
-                        config:http.url "http://example.com/rdf4j"
-                    ] ;
-                    config:ca.readContext <http://example.com/context1>, <http://example.com/context2> ;
-                    config:ca.insertContext <http://example.com/insert_context> ;
-                    config:ca.removeContext <http://example.com/remove1>, <http://example.com/remove2>
-                ] .
-        """
-        assert_isomorphic(repo_config.to_turtle(), expected_turtle)
-
     def test_native_store_config(self):
         native_config = (
             NativeStoreConfig.Builder()
@@ -217,10 +179,8 @@ class TestRepositoryConfig:
             .build()
         )
         repo_config = (
-            RepositoryConfig.Builder(rep_id="native_repo")
-            .implementation(
-                SailRepositoryConfig.Builder(sail_impl=native_config).build()
-            )
+            RepositoryConfig.Builder(repo_id="native_repo")
+            .repo_impl(SailRepositoryConfig.Builder().sail_impl(native_config).build())
             .build()
         )
         expected_turtle = """
@@ -240,7 +200,7 @@ class TestRepositoryConfig:
                         config:native.valueIDCacheSize "5000"^^xsd:integer ;
                         config:native.namespaceCacheSize "200"^^xsd:integer ;
                         config:native.namespaceIDCacheSize "100"^^xsd:integer;
-                        config:sail.iterationCacheSyncThreshold "20000";
+                        config:sail.iterationCacheSyncThreshold "20000"^^xsd:integer;
                         config:sail.defaultQueryEvaluationMode "STANDARD"
                     ]
                 ] .
@@ -258,8 +218,8 @@ class TestRepositoryConfig:
             .build()
         )
         repo_config = (
-            RepositoryConfig.Builder(rep_id="es_repo")
-            .implementation(SailRepositoryConfig.Builder(sail_impl=es_config).build())
+            RepositoryConfig.Builder(repo_id="es_repo")
+            .repo_impl(SailRepositoryConfig.Builder(sail_impl=es_config).build())
             .build()
         )
         expected_turtle = """
@@ -277,9 +237,44 @@ class TestRepositoryConfig:
                         config:ess.port "9200"^^xsd:integer ;
                         config:ess.clusterName "mycluster" ;
                         config:ess.index "myindex";
-                        config:sail.iterationCacheSyncThreshold "10000";
+                        config:sail.iterationCacheSyncThreshold "10000"^^xsd:integer;
                         config:sail.defaultQueryEvaluationMode "STANDARD"
                     ]
                 ] .
         """
         assert_isomorphic(repo_config.to_turtle(), expected_turtle)
+
+    def test_memory_store_config_defaults(self):
+        config = (
+            RepositoryConfig.Builder(repo_id="memory_store_repo")
+            .repo_impl(
+                SailRepositoryConfig.Builder(
+                    sail_impl=MemoryStoreConfig.Builder()
+                    .persist(False)
+                    .sync_delay(1000)
+                    .iteration_cache_sync_threshold(5000)
+                    .default_query_evaluation_mode("STANDARD")
+                    .build()
+                ).build()
+            )
+            .build()
+        )
+        expected_turtle = """
+            @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+            @prefix config: <tag:rdf4j.org,2023:config/> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+            [] a config:Repository ;
+                config:rep.id "memory_store_repo" ;
+                config:rep.impl [
+                    config:rep.type "openrdf:SailRepository" ;
+                    config:sail.impl [
+                        config:sail.type "openrdf:MemoryStore" ;
+                        config:mem.persist "false"^^xsd:boolean ;
+                        config:mem.syncDelay "1000"^^xsd:integer ;
+                        config:sail.iterationCacheSyncThreshold "5000"^^xsd:integer ;
+                        config:sail.defaultQueryEvaluationMode "STANDARD"
+                    ]
+                ] .
+        """
+        assert_isomorphic(config.to_turtle(), expected_turtle)

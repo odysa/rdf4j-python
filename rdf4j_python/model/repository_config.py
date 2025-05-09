@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from rdflib import BNode, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import RDF, RDFS, XSD
@@ -14,12 +14,12 @@ class RepositoryConfig:
 
     def __init__(
         self,
-        rep_id: str,
-        label: Optional[str] = None,
+        repo_id: str,
+        title: Optional[str] = None,
         impl: Optional["RepositoryImplConfig"] = None,
     ):
-        self.rep_id = rep_id
-        self.label = label
+        self.repo_id = repo_id
+        self.title = title
         self.impl = impl
 
     def to_turtle(self) -> str:
@@ -33,10 +33,10 @@ class RepositoryConfig:
         repo_node = BNode()
         graph.add((repo_node, RDF["type"], CONFIG["Repository"]))
 
-        graph.add((repo_node, CONFIG["rep.id"], Literal(self.rep_id)))
+        graph.add((repo_node, CONFIG["rep.id"], Literal(self.repo_id)))
 
-        if self.label:
-            graph.add((repo_node, RDFS["label"], Literal(self.label)))
+        if self.title:
+            graph.add((repo_node, RDFS["label"], Literal(self.title)))
 
         if self.impl:
             impl_node = self.impl.add_to_graph(graph)
@@ -49,21 +49,26 @@ class RepositoryConfig:
         Builder class for creating RepositoryConfig instances.
         """
 
-        def __init__(self, rep_id: str):
-            self._rep_id = rep_id
-            self._label: Optional[str] = None
+        def __init__(self, repo_id: Optional[str] = None):
+            self._repo_id = repo_id
+            self._title: Optional[str] = None
             self._impl: Optional["RepositoryImplConfig"] = None
 
-        def label(self, label: str) -> "RepositoryConfig.Builder":
+        def repo_id(self, repo_id: str) -> "RepositoryConfig.Builder":
             """
-            Sets the human-readable label for the repository.
+            Sets the repository ID.
             """
-            self._label = label
+            self._repo_id = repo_id
             return self
 
-        def implementation(
-            self, impl: "RepositoryImplConfig"
-        ) -> "RepositoryConfig.Builder":
+        def title(self, title: str) -> "RepositoryConfig.Builder":
+            """
+            Sets the human-readable title for the repository.
+            """
+            self._title = title
+            return self
+
+        def repo_impl(self, impl: "RepositoryImplConfig") -> "RepositoryConfig.Builder":
             """
             Sets the repository implementation configuration.
             """
@@ -75,7 +80,7 @@ class RepositoryConfig:
             Builds and returns the RepositoryConfig instance.
             """
             return RepositoryConfig(
-                rep_id=self._rep_id, label=self._label, impl=self._impl
+                repo_id=self._repo_id, title=self._title, impl=self._impl
             )
 
 
@@ -209,8 +214,12 @@ class SailRepositoryConfig(RepositoryImplConfig):
         return super().add_to_graph(graph)
 
     class Builder:
-        def __init__(self, sail_impl: "SailConfig"):
+        def __init__(self, sail_impl: Optional["SailConfig"] = None):
             self._sail_impl = sail_impl
+
+        def sail_impl(self, sail_impl: "SailConfig") -> "SailRepositoryConfig.Builder":
+            self._sail_impl = sail_impl
+            return self
 
         def build(self) -> "SailRepositoryConfig":
             return SailRepositoryConfig(sail_impl=self._sail_impl)
@@ -232,8 +241,6 @@ class DatasetRepositoryConfig(RepositoryImplConfig):
         Adds the DatasetRepository configuration to the RDF Graph
         """
         repo_node = super().add_to_graph(graph)
-        delegate_node = self.config_params["delegate"].to_rdf(graph)
-        graph.add((repo_node, CONFIG["delegate"], delegate_node))
         return repo_node
 
     class Builder:
@@ -242,88 +249,6 @@ class DatasetRepositoryConfig(RepositoryImplConfig):
 
         def build(self) -> "DatasetRepositoryConfig":
             return DatasetRepositoryConfig(delegate=self._delegate)
-
-
-class ContextAwareRepositoryConfig(RepositoryImplConfig):
-    """
-    Configuration for a ContextAwareRepository using RDFlib.
-    """
-
-    TYPE = "openrdf:ContextAwareRepository"
-
-    def __init__(
-        self,
-        delegate: "RepositoryImplConfig",
-        read_context: Optional[List[str]] = None,
-        insert_context: Optional[str] = None,
-        remove_context: Optional[List[str]] = None,
-    ):
-        super().__init__(rep_type=ContextAwareRepositoryConfig.TYPE)
-        self.config_params["delegate"] = delegate
-        if read_context:
-            self.config_params["ca.readContext"] = [URIRef(ctx) for ctx in read_context]
-        if insert_context:
-            self.config_params["ca.insertContext"] = URIRef(insert_context)
-        if remove_context:
-            self.config_params["ca.removeContext"] = [
-                URIRef(ctx) for ctx in remove_context
-            ]
-
-    def add_to_graph(self, graph: Graph) -> URIRef:
-        """
-        Adds the ContextAwareRepository configuration to the RDF graph.
-        """
-        repo_node = super().add_to_graph(graph)
-        delegate_node = self.config_params["delegate"].to_rdf(graph)
-        graph.add((repo_node, CONFIG["delegate"], delegate_node))
-        if "ca.readContext" in self.config_params:
-            for ctx in self.config_params["ca.readContext"]:
-                graph.add((repo_node, CONFIG["ca.readContext"], ctx))
-        if "ca.insertContext" in self.config_params:
-            graph.add(
-                (
-                    repo_node,
-                    CONFIG["ca.insertContext"],
-                    self.config_params["ca.insertContext"],
-                )
-            )
-        if "ca.removeContext" in self.config_params:
-            for ctx in self.config_params["ca.removeContext"]:
-                graph.add((repo_node, CONFIG["ca.removeContext"], ctx))
-        return repo_node
-
-    class Builder:
-        def __init__(self, delegate: "RepositoryImplConfig"):
-            self._delegate = delegate
-            self._read_context: Optional[List[str]] = None
-            self._insert_context: Optional[str] = None
-            self._remove_context: Optional[List[str]] = None
-
-        def read_context(
-            self, *contexts: str
-        ) -> "ContextAwareRepositoryConfig.Builder":
-            self._read_context = list(contexts)
-            return self
-
-        def insert_context(
-            self, context: str
-        ) -> "ContextAwareRepositoryConfig.Builder":
-            self._insert_context = context
-            return self
-
-        def remove_context(
-            self, *contexts: str
-        ) -> "ContextAwareRepositoryConfig.Builder":
-            self._remove_context = list(contexts)
-            return self
-
-        def build(self) -> "ContextAwareRepositoryConfig":
-            return ContextAwareRepositoryConfig(
-                delegate=self._delegate,
-                read_context=self._read_context,
-                insert_context=self._insert_context,
-                remove_context=self._remove_context,
-            )
 
 
 class SailConfig:
@@ -392,7 +317,7 @@ class MemoryStoreConfig(SailConfig):
 
     def __init__(
         self,
-        persist: bool,
+        persist: Optional[bool] = None,
         sync_delay: Optional[int] = None,
         iteration_cache_sync_threshold: Optional[int] = None,
         default_query_evaluation_mode: Optional[str] = None,
@@ -402,16 +327,21 @@ class MemoryStoreConfig(SailConfig):
             iteration_cache_sync_threshold=iteration_cache_sync_threshold,
             default_query_evaluation_mode=default_query_evaluation_mode,
         )
-        self.config_params["mem.persist"] = persist
+        if persist is not None:
+            self.config_params["mem.persist"] = persist
         if sync_delay is not None:
             self.config_params["mem.syncDelay"] = sync_delay
 
     class Builder:
-        def __init__(self, persist: bool):
-            self._persist = persist
+        def __init__(self):
+            self._persist: Optional[bool] = None
             self._sync_delay: Optional[int] = None
             self._iteration_cache_sync_threshold: Optional[int] = None
             self._default_query_evaluation_mode: Optional[str] = None
+
+        def persist(self, persist: bool) -> "MemoryStoreConfig.Builder":
+            self._persist = persist
+            return self
 
         def sync_delay(self, sync_delay: int) -> "MemoryStoreConfig.Builder":
             self._sync_delay = sync_delay
@@ -463,15 +393,15 @@ class NativeStoreConfig(SailConfig):
         )
         if triple_indexes:
             self.config_params["native.tripleIndexes"] = triple_indexes
-        if force_sync is not None:
+        if force_sync:
             self.config_params["native.forceSync"] = force_sync
-        if value_cache_size is not None:
+        if value_cache_size:
             self.config_params["native.valueCacheSize"] = value_cache_size
-        if value_id_cache_size is not None:
+        if value_id_cache_size:
             self.config_params["native.valueIDCacheSize"] = value_id_cache_size
-        if namespace_cache_size is not None:
+        if namespace_cache_size:
             self.config_params["native.namespaceCacheSize"] = namespace_cache_size
-        if namespace_id_cache_size is not None:
+        if namespace_id_cache_size:
             self.config_params["native.namespaceIDCacheSize"] = namespace_id_cache_size
 
     class Builder:

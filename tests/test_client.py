@@ -1,6 +1,11 @@
 import pytest
 
 from rdf4j_python import AsyncRdf4jDB
+from rdf4j_python.model.repository_config import (
+    MemoryStoreConfig,
+    RepositoryConfig,
+    SailRepositoryConfig,
+)
 from rdf4j_python.utils.const import Rdf4jContentType
 
 
@@ -73,3 +78,24 @@ async def test_list_repos(rdf4j_service: str):
             repo_id = f"test_list_repos_{repo}"
             assert repo_id in [repo.id for repo in repos]
             assert repo_id in [repo.title for repo in repos]
+
+
+@pytest.mark.asyncio
+async def test_create_memory_store_repo(rdf4j_service: str):
+    async with AsyncRdf4jDB(rdf4j_service) as db:
+        repo_id = "test_create_memory_store_repo"
+        repo_config = (
+            RepositoryConfig.Builder(repo_id)
+            .title(repo_id)
+            .repo_impl(
+                SailRepositoryConfig.Builder(
+                    sail_impl=MemoryStoreConfig.Builder().persist(False).build()
+                ).build()
+            )
+            .build()
+        )
+        await db.create_repository(
+            repository_id=repo_id,
+            rdf_config_data=repo_config.to_turtle(),
+            content_type=Rdf4jContentType.TURTLE,
+        )
