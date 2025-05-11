@@ -63,7 +63,8 @@ class AsyncRdf4JRepository:
         headers = {"Content-Type": Rdf4jContentType.NTRIPLES.value}
         response = await self._client.put(path, content=namespace, headers=headers)
         self._handle_repo_not_found_exception(response)
-        response.raise_for_status()
+        if response.status_code != httpx.codes.NO_CONTENT:
+            raise NamespaceException(f"Failed to set namespace: {response.text}")
 
     async def get_namespace(self, prefix: str) -> Namespace:
         path = f"/repositories/{self._repository_id}/namespaces/{prefix}"
