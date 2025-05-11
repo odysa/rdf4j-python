@@ -1,39 +1,21 @@
 import asyncio
-import textwrap
 
 from rdf4j_python import AsyncRdf4j
+from rdf4j_python.model import MemoryStoreConfig, RepositoryConfig
+from rdf4j_python.utils.const import Rdf4jContentType
 
 
 async def main():
     async with AsyncRdf4j("http://localhost:19780/rdf4j-server") as db:
-        repositories = await db.list_repositories()
-        print("Repositories:", repositories)
-
-        version = await db.get_protocol_version()
-        print("Protocol Version:", version)
-
-        repo_config = textwrap.dedent(
-            """
-            @prefix config: <tag:rdf4j.org,2023:config/>.
-            [] a config:Repository ;
-            config:rep.id "example-repo" ;
-            config:rep.impl [
-                config:rep.type "openrdf:SailRepository" ;
-                config:sail.impl [
-                    config:sail.type "openrdf:MemoryStore" ;
-                ]
-            ] .
-        """
+        repo_config = RepositoryConfig.with_sail_repository(
+            repo_id="example-repo",
+            sail_impl=MemoryStoreConfig.Builder().persist(False).build(),
         )
         await db.create_repository(
-            repository_id="example-repo",
-            rdf_config_data=repo_config,
-            content_type="application/x-turtle",
+            repository_id=repo_config.repo_id,
+            rdf_config_data=repo_config.to_turtle(),
+            content_type=Rdf4jContentType.TURTLE,
         )
-        print("Repository 'example-repo' created.")
-        # List repositories again to confirm creation
-        repositories = await db.list_repositories()
-        print("Repositories after creation:", repositories)
 
 
 if __name__ == "__main__":
