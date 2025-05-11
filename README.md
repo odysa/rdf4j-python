@@ -1,6 +1,10 @@
 # 🐍 rdf4j-python
 
-**A Pythonic interface to the powerful Java-based RDF4J framework.**
+**A Pythonic interface to the powerful Java-based [Eclipse RDF4J](https://rdf4j.org/) framework.**
+
+> ⚠️ **Note:** This project is currently under active development and considered **experimental**. Interfaces may change. Use with caution in production environments—and feel free to help shape its future!
+
+✅ **Supports both asynchronous (`async/await`) and synchronous programming styles.**
 
 ## 🌐 Overview
 
@@ -16,15 +20,15 @@
 
 ## 📦 Installation
 
-Install the package using pip:
+Install via pip:
 
 ```bash
 pip install rdf4j-python
 ```
 
-## 🧪 Usage
+## 🧪 Usage (Async)
 
-Here's a basic example of how to use `rdf4j-python`:
+Here's a basic example of how to use `rdf4j-python` to create an in-memory sail repository
 
 ```python
 from rdf4j_python import AsyncRdf4j
@@ -51,7 +55,11 @@ For more detailed examples, refer to the [examples](https://github.com/odysa/rdf
 
 ## 🤝 Contributing
 
-Contributions are welcome! If you'd like to contribute, please fork the repository and submit a pull request. For major changes, please open an issue first to discuss what you would like to change.
+We welcome contributions and feedback! If you'd like to help improve this project:
+
+- Fork the repo and submit a pull request
+- Open an issue for bugs, feature ideas, or discussions
+- ⭐ Star the repo if you find it useful!
 
 ## 📄 License
 
