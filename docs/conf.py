@@ -28,7 +28,7 @@ exclude_patterns = []
 
 # -- Options for HTML output -------------------------------------------------
 
-html_theme = "furo"  # Or 'sphinx_rtd_theme', 'alabaster', etc.
+html_theme = "alabaster"  # Or 'sphinx_rtd_theme', 'alabaster', etc.
 html_context = {
     "display_github": True,
     "github_user": "odysa",
