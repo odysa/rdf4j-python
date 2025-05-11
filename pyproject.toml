@@ -14,6 +14,9 @@ dev = [
     "ruff>=0.11.8",
 ]
 
+[project.optional-dependencies]
+docs = ["sphinx>=8", "sphinx-rtd-theme>=3.0", "sphinx_automodapi"]
+
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "INFO"
