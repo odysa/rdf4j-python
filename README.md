@@ -26,7 +26,7 @@ Install via pip:
 pip install rdf4j-python
 ```
 
-## 🧪 Usage(Async)
+## 🧪 Usage (Async)
 
 Here's a basic example of how to use `rdf4j-python` to create an in-memory sail repository
 
