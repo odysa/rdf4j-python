@@ -39,3 +39,5 @@ html_context = {
 
 
 exclude_patterns = ["dist", ".DS_Store", ".venv", ".pytest_cache"]
+
+master_doc = "README.md"
