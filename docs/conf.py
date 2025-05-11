@@ -21,7 +21,15 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",  # for Google/NumPy-style docstrings
     "sphinx.ext.viewcode",
+    "sphinx_automodapi",
+    "myst_parser",
 ]
+
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".txt": "markdown",
+    ".md": "markdown",
+}
 
 templates_path = ["_templates"]
 exclude_patterns = []
