@@ -1,6 +1,7 @@
 import pytest
 
 from rdf4j_python import AsyncRdf4j
+from rdf4j_python.exception.repo_exception import RepositoryNotFoundException
 from rdf4j_python.model import IRI, RepositoryConfig
 from rdf4j_python.utils.const import Rdf4jContentType
 
@@ -18,6 +19,14 @@ async def test_repo_size(rdf4j_service: str, random_mem_repo_config: RepositoryC
 
 
 @pytest.mark.asyncio
+async def test_repo_size_not_found(rdf4j_service: str):
+    async with AsyncRdf4j(rdf4j_service) as db:
+        repo = await db.get_repository("not_found")
+        with pytest.raises(RepositoryNotFoundException):
+            await repo.size()
+
+
+@pytest.mark.asyncio
 async def test_repo_set_namespace(
     rdf4j_service: str, random_mem_repo_config: RepositoryConfig
 ):
@@ -28,6 +37,14 @@ async def test_repo_set_namespace(
             content_type=Rdf4jContentType.TURTLE,
         )
         await repo.set_namespace("ex", "http://example.org/")
+
+
+@pytest.mark.asyncio
+async def test_repo_set_namespace_not_found(rdf4j_service: str):
+    async with AsyncRdf4j(rdf4j_service) as db:
+        repo = await db.get_repository("not_found")
+        with pytest.raises(Exception):
+            await repo.set_namespace("ex", "http://example.org/")
 
 
 @pytest.mark.asyncio
@@ -53,6 +70,16 @@ async def test_repo_get_namespaces(
 
 
 @pytest.mark.asyncio
+async def test_repo_get_namespace_not_found(
+    rdf4j_service: str, random_mem_repo_config: RepositoryConfig
+):
+    async with AsyncRdf4j(rdf4j_service) as db:
+        repo = await db.get_repository("not_found")
+        with pytest.raises(RepositoryNotFoundException):
+            await repo.get_namespace("ex")
+
+
+@pytest.mark.asyncio
 async def test_repo_get_namespace(
     rdf4j_service: str, random_mem_repo_config: RepositoryConfig
 ):
@@ -66,6 +93,16 @@ async def test_repo_get_namespace(
         namespace = await repo.get_namespace("ex")
         assert namespace.prefix == "ex"
         assert namespace.namespace == IRI("http://example.org/")
+
+
+@pytest.mark.asyncio
+async def test_repo_delete_namespace_not_found(
+    rdf4j_service: str, random_mem_repo_config: RepositoryConfig
+):
+    async with AsyncRdf4j(rdf4j_service) as db:
+        repo = await db.get_repository("not_found")
+        with pytest.raises(RepositoryNotFoundException):
+            await repo.delete_namespace("ex")
 
 
 @pytest.mark.asyncio
