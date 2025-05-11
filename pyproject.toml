@@ -13,6 +13,8 @@ dev = [
     "pytest-docker>=3.2.1",
     "ruff>=0.11.8",
 ]
+docs = ["sphinx>=8", "sphinx-rtd-theme>=3.0", "sphinx_automodapi"]
+
 
 [project.optional-dependencies]
 docs = ["sphinx>=8", "sphinx-rtd-theme>=3.0", "sphinx_automodapi"]
