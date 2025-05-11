@@ -37,11 +37,14 @@ def rdf4j_service(docker_ip: str, docker_services) -> str:
 @pytest.fixture(scope="function")
 def random_mem_repo_config() -> RepositoryConfig:
     repo_id = f"test_repo_{str(randint(1, 1000000))}"
-    return RepositoryConfig.with_sail_repository(
-        repo_id=repo_id,
-        sail_impl=MemoryStoreConfig.Builder()
-        .persist(False)
-        .iteration_cache_sync_threshold(1000)
-        .build(),
-        title=repo_id,
+    return (
+        RepositoryConfig.builder_with_sail_repository(
+            MemoryStoreConfig.Builder()
+            .persist(False)
+            .iteration_cache_sync_threshold(1000)
+            .build(),
+        )
+        .repo_id(repo_id)
+        .title(repo_id)
+        .build()
     )

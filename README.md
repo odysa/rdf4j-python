@@ -32,9 +32,13 @@ from rdf4j_python.model import MemoryStoreConfig, RepositoryConfig
 from rdf4j_python.utils.const import Rdf4jContentType
 
 async with AsyncRdf4j("http://localhost:19780/rdf4j-server") as db:
-    repo_config = RepositoryConfig.with_sail_repository(
-        repo_id="example-repo",
-        sail_impl=MemoryStoreConfig.Builder().persist(False).build(),
+    repo_config = (
+        RepositoryConfig.builder_with_sail_repository(
+            MemoryStoreConfig.Builder().persist(False).build(),
+        )
+        .repo_id("example-repo")
+        .title("Example Repository")
+        .build()
     )
     await db.create_repository(
         repository_id=repo_config.repo_id,

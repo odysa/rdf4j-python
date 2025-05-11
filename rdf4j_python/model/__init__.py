@@ -1,5 +1,16 @@
 from ._namespace import IRI, Namespace
-from ._repository_config import RepositoryConfig
-from ._repository_info import RepositoryInfo
+from ._repository_config import (
+    MemoryStoreConfig,
+    NativeStoreConfig,
+    RepositoryConfig,
+)
+from ._repository_info import RepositoryMetadata
 
-__all__ = ["IRI", "Namespace", "RepositoryConfig", "RepositoryInfo"]
+__all__ = [
+    "IRI",
+    "Namespace",
+    "RepositoryConfig",
+    "MemoryStoreConfig",
+    "NativeStoreConfig",
+    "RepositoryMetadata",
+]
