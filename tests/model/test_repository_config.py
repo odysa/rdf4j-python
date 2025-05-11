@@ -2,7 +2,7 @@
 from rdflib import Graph
 from rdflib.compare import isomorphic
 
-from rdf4j_python.model.repository_config import (
+from rdf4j_python.model._repository_config import (
     DatasetRepositoryConfig,
     ElasticsearchStoreConfig,
     HTTPRepositoryConfig,

@@ -1,11 +1,11 @@
 import asyncio
 import textwrap
 
-from rdf4j_python import AsyncRdf4jDB
+from rdf4j_python import AsyncRdf4j
 
 
 async def main():
-    async with AsyncRdf4jDB("http://localhost:19780/rdf4j-server") as db:
+    async with AsyncRdf4j("http://localhost:19780/rdf4j-server") as db:
         repositories = await db.list_repositories()
         print("Repositories:", repositories)
 

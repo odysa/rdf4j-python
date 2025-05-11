@@ -12,15 +12,27 @@ class RepositoryConfig:
     Represents the configuration for an RDF4J Repository using RDFlib.
     """
 
+    _repo_id: str
+    _title: Optional[str] = None
+    _impl: Optional["RepositoryImplConfig"] = None
+
     def __init__(
         self,
         repo_id: str,
         title: Optional[str] = None,
         impl: Optional["RepositoryImplConfig"] = None,
     ):
-        self.repo_id = repo_id
-        self.title = title
-        self.impl = impl
+        self._repo_id = repo_id
+        self._title = title
+        self._impl = impl
+
+    @property
+    def repo_id(self) -> str:
+        return self._repo_id
+
+    @property
+    def title(self) -> Optional[str]:
+        return self._title
 
     def to_turtle(self) -> str:
         """
@@ -33,13 +45,13 @@ class RepositoryConfig:
         repo_node = BNode()
         graph.add((repo_node, RDF["type"], CONFIG["Repository"]))
 
-        graph.add((repo_node, CONFIG["rep.id"], Literal(self.repo_id)))
+        graph.add((repo_node, CONFIG["rep.id"], Literal(self._repo_id)))
 
-        if self.title:
-            graph.add((repo_node, RDFS["label"], Literal(self.title)))
+        if self._title:
+            graph.add((repo_node, RDFS["label"], Literal(self._title)))
 
-        if self.impl:
-            impl_node = self.impl.add_to_graph(graph)
+        if self._impl:
+            impl_node = self._impl.add_to_graph(graph)
             graph.add((repo_node, CONFIG["rep.impl"], impl_node))
 
         return graph.serialize(format="turtle").encode("utf-8")
