@@ -1,11 +1,7 @@
 import pytest
 
-from rdf4j_python import AsyncRdf4jDB
-from rdf4j_python.model.repository_config import (
-    MemoryStoreConfig,
-    RepositoryConfig,
-    SailRepositoryConfig,
-)
+from rdf4j_python import AsyncRdf4j
+from rdf4j_python.model import RepositoryConfig
 from rdf4j_python.utils.const import Rdf4jContentType
 
 
@@ -27,7 +23,7 @@ def get_repo_config(name: str):
 
 @pytest.mark.asyncio
 async def test_create_repo(rdf4j_service: str):
-    async with AsyncRdf4jDB(rdf4j_service) as db:
+    async with AsyncRdf4j(rdf4j_service) as db:
         repo_id = "test_create_repo"
         await db.create_repository(
             repository_id=repo_id,
@@ -43,7 +39,7 @@ async def test_create_repo(rdf4j_service: str):
 
 @pytest.mark.asyncio
 async def test_delete_repo(rdf4j_service: str):
-    async with AsyncRdf4jDB(rdf4j_service) as db:
+    async with AsyncRdf4j(rdf4j_service) as db:
         repo_id = "test_delete_repo"
         await db.create_repository(
             repository_id=repo_id,
@@ -61,7 +57,7 @@ async def test_delete_repo(rdf4j_service: str):
 
 @pytest.mark.asyncio
 async def test_list_repos(rdf4j_service: str):
-    async with AsyncRdf4jDB(rdf4j_service) as db:
+    async with AsyncRdf4j(rdf4j_service) as db:
         repo_count = 10
         repos = await db.list_repositories()
         assert len(repos) == 0
@@ -81,21 +77,12 @@ async def test_list_repos(rdf4j_service: str):
 
 
 @pytest.mark.asyncio
-async def test_create_memory_store_repo(rdf4j_service: str):
-    async with AsyncRdf4jDB(rdf4j_service) as db:
-        repo_id = "test_create_memory_store_repo"
-        repo_config = (
-            RepositoryConfig.Builder(repo_id)
-            .title(repo_id)
-            .repo_impl(
-                SailRepositoryConfig.Builder(
-                    sail_impl=MemoryStoreConfig.Builder().persist(False).build()
-                ).build()
-            )
-            .build()
-        )
+async def test_create_memory_store_repo(
+    rdf4j_service: str, random_mem_repo_config: RepositoryConfig
+):
+    async with AsyncRdf4j(rdf4j_service) as db:
         await db.create_repository(
-            repository_id=repo_id,
-            rdf_config_data=repo_config.to_turtle(),
+            repository_id=random_mem_repo_config.repo_id,
+            rdf_config_data=random_mem_repo_config.to_turtle(),
             content_type=Rdf4jContentType.TURTLE,
         )

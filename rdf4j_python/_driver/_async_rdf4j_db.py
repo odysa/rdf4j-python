@@ -8,13 +8,13 @@ from rdf4j_python.exception.repo_exception import (
     RepositoryCreationException,
     RepositoryDeletionException,
 )
-from rdf4j_python.model.repository import RepositoryInfo
+from rdf4j_python.model._repository_info import RepositoryInfo
 from rdf4j_python.utils.const import Rdf4jContentType
 
-from ._async_repository import AsyncRepository
+from ._async_repository import AsyncRdf4JRepository
 
 
-class AsyncRdf4jDB:
+class AsyncRdf4j:
     _client: AsyncApiClient
     _base_url: str
 
@@ -51,21 +51,21 @@ class AsyncRdf4jDB:
             RepositoryInfo.from_rdflib_binding(binding) for binding in result.bindings
         ]
 
-    async def get_repository(self, repository_id: str) -> AsyncRepository:
+    async def get_repository(self, repository_id: str) -> AsyncRdf4JRepository:
         """
         Get an AsyncRepository instance for the specified repository ID.
 
         :param repository_id: The ID of the repository.
         :return: An instance of AsyncRepository.
         """
-        return AsyncRepository(self._client, repository_id)
+        return AsyncRdf4JRepository(self._client, repository_id)
 
     async def create_repository(
         self,
         repository_id: str,
         rdf_config_data: str,
         content_type: Union[Rdf4jContentType, str] = Rdf4jContentType.TURTLE,
-    ):
+    ) -> AsyncRdf4JRepository:
         """
         Create a new RDF4J repository.
 
@@ -86,6 +86,7 @@ class AsyncRdf4jDB:
             raise RepositoryCreationException(
                 f"Repository creation failed: {response.status_code} - {response.text}"
             )
+        return AsyncRdf4JRepository(self._client, repository_id)
 
     async def delete_repository(self, repository_id: str):
         """

@@ -1,7 +1,14 @@
 import logging
+from random import randint
 
 import httpx
 import pytest
+
+from rdf4j_python.model._repository_config import (
+    MemoryStoreConfig,
+    RepositoryConfig,
+    SailRepositoryConfig,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -26,3 +33,18 @@ def rdf4j_service(docker_ip: str, docker_services) -> str:
         timeout=30.0, pause=0.1, check=lambda: is_responsive(url)
     )
     return url
+
+
+@pytest.fixture(scope="function")
+def random_mem_repo_config() -> RepositoryConfig:
+    repo_id = f"test_repo_{str(randint(1, 1000000))}"
+    return (
+        RepositoryConfig.Builder(repo_id)
+        .title(repo_id)
+        .repo_impl(
+            SailRepositoryConfig.Builder(
+                sail_impl=MemoryStoreConfig.Builder().persist(False).build()
+            ).build()
+        )
+        .build()
+    )

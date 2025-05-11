@@ -1,8 +1,13 @@
+import httpx
+import rdflib
+
 from rdf4j_python import AsyncApiClient
+from rdf4j_python.exception.repo_exception import NamespaceException
+from rdf4j_python.model._namespace import Namespace
 from rdf4j_python.utils.const import Rdf4jContentType
 
 
-class AsyncRepository:
+class AsyncRdf4JRepository:
     def __init__(self, client: AsyncApiClient, repository_id: str):
         self._client = client
         self._repository_id = repository_id
@@ -37,15 +42,49 @@ class AsyncRepository:
 
     async def get_namespaces(self):
         path = f"/repositories/{self._repository_id}/namespaces"
-        response = await self._client.get(path)
-        if Rdf4jContentType.SPARQL_RESULTS_JSON in response.headers.get(
-            "Content-Type", ""
-        ):
-            return response.json()
-        return response.text
+        headers = {"Accept": Rdf4jContentType.SPARQL_RESULTS_JSON}
+        response = await self._client.get(path, headers=headers)
+
+        result = rdflib.query.Result.parse(
+            response, format=Rdf4jContentType.SPARQL_RESULTS_JSON
+        )
+        return [Namespace.from_rdflib_binding(binding) for binding in result.bindings]
 
     async def set_namespace(self, prefix: str, namespace: str):
         path = f"/repositories/{self._repository_id}/namespaces/{prefix}"
         headers = {"Content-Type": Rdf4jContentType.NTRIPLES.value}
-        response = await self._client.put(path, data=namespace, headers=headers)
+        response = await self._client.put(path, content=namespace, headers=headers)
+        response.raise_for_status()
+
+    async def get_namespace(self, prefix: str) -> Namespace:
+        path = f"/repositories/{self._repository_id}/namespaces/{prefix}"
+        headers = {"Accept": Rdf4jContentType.NTRIPLES.value}
+        response = await self._client.get(path, headers=headers)
+        if response.status_code != httpx.codes.OK:
+            raise NamespaceException(f"Failed to get namespace: {response.text}")
+        return Namespace(prefix, response.text)
+
+    async def delete_namespace(self, prefix: str):
+        path = f"/repositories/{self._repository_id}/namespaces/{prefix}"
+        response = await self._client.delete(path)
+        response.raise_for_status()
+
+    async def size(self) -> int:
+        path = f"/repositories/{self._repository_id}/size"
+        response = await self._client.get(path)
+        response.raise_for_status()
+        return int(response.text)
+
+    async def add_statement(self, subject: str, predicate: str, object: str):
+        path = f"/repositories/{self._repository_id}/statements"
+        headers = {"Content-Type": Rdf4jContentType.NTRIPLES.value}
+        response = await self._client.post(
+            path, data=f"{subject} {predicate} {object}.", headers=headers
+        )
+        response.raise_for_status()
+
+    async def upload_file(self, file_path: str, content_type: Rdf4jContentType):
+        path = f"/repositories/{self._repository_id}/upload"
+        headers = {"Content-Type": content_type.value}
+        response = await self._client.post(path, data=file_path, headers=headers)
         response.raise_for_status()

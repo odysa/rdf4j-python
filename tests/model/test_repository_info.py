@@ -2,7 +2,7 @@ import pytest
 import rdflib
 from rdflib.term import Literal, URIRef, Variable
 
-from rdf4j_python.model.repository import RepositoryInfo
+from rdf4j_python.model._repository_info import RepositoryInfo
 
 
 @pytest.fixture
