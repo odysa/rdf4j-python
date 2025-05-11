@@ -8,7 +8,7 @@ from rdf4j_python.exception.repo_exception import (
     RepositoryCreationException,
     RepositoryDeletionException,
 )
-from rdf4j_python.model._repository_info import RepositoryInfo
+from rdf4j_python.model._repository_info import RepositoryMetadata
 from rdf4j_python.utils.const import Rdf4jContentType
 
 from ._async_repository import AsyncRdf4JRepository
@@ -33,7 +33,7 @@ class AsyncRdf4j:
         response.raise_for_status()
         return response.text
 
-    async def list_repositories(self) -> list[RepositoryInfo]:
+    async def list_repositories(self) -> list[RepositoryMetadata]:
         """
         List all RDF4J repositories.
 
@@ -48,7 +48,8 @@ class AsyncRdf4j:
         )
 
         return [
-            RepositoryInfo.from_rdflib_binding(binding) for binding in result.bindings
+            RepositoryMetadata.from_rdflib_binding(binding)
+            for binding in result.bindings
         ]
 
     async def get_repository(self, repository_id: str) -> AsyncRdf4JRepository:

@@ -7,9 +7,9 @@ from ._base_model import _BaseModel
 
 
 @dataclass
-class RepositoryInfo(_BaseModel):
+class RepositoryMetadata(_BaseModel):
     """
-    Represents a repository information RDF4J.
+    Represents a repository metadata RDF4J.
     """
 
     id: str  # The repository identifier
@@ -25,7 +25,7 @@ class RepositoryInfo(_BaseModel):
     @classmethod
     def from_rdflib_binding(
         cls, result: Mapping[Variable, Identifier]
-    ) -> "RepositoryInfo":
+    ) -> "RepositoryMetadata":
         """
         Create a Repository instance from a SPARQL query result
         represented as a Mapping from rdflib Variables to Identifiers.

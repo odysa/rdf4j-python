@@ -56,6 +56,20 @@ class RepositoryConfig:
 
         return graph.serialize(format="turtle").encode("utf-8")
 
+    @staticmethod
+    def builder_with_sail_repository(
+        sail_impl: "SailConfig",
+    ) -> "RepositoryConfig.Builder":
+        """
+        Convenience method to create a RepositoryConfig with a SailRepositoryConfig.
+        """
+
+        repo_config = RepositoryConfig.Builder().repo_impl(
+            SailRepositoryConfig.Builder().sail_impl(sail_impl).build()
+        )
+
+        return repo_config
+
     class Builder:
         """
         Builder class for creating RepositoryConfig instances.
