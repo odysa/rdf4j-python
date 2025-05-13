@@ -118,7 +118,31 @@ async def test_repo_delete_namespace(
             rdf_config_data=random_mem_repo_config.to_turtle(),
             content_type=Rdf4jContentType.TURTLE,
         )
+        await repo.set_namespace("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
         await repo.set_namespace("ex", "http://example.org/")
+        assert len(await repo.get_namespaces()) == 2
         await repo.delete_namespace("ex")
         namespaces = await repo.get_namespaces()
-        assert len(namespaces) == 0
+        assert len(namespaces) == 1
+        assert namespaces[0].prefix == "rdf"
+        assert namespaces[0].namespace == IRI(
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        )
+
+
+@pytest.mark.asyncio
+async def test_repo_clear_all_namespaces(
+    rdf4j_service: str, random_mem_repo_config: RepositoryConfig
+):
+    async with AsyncRdf4j(rdf4j_service) as db:
+        repo = await db.create_repository(
+            repository_id=random_mem_repo_config.repo_id,
+            rdf_config_data=random_mem_repo_config.to_turtle(),
+            content_type=Rdf4jContentType.TURTLE,
+        )
+        await repo.set_namespace("ex", "http://example.org/")
+        await repo.set_namespace("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
+        await repo.set_namespace("rdfs", "http://www.w3.org/2000/01/rdf-schema#")
+        assert len(await repo.get_namespaces()) == 3
+        await repo.clear_all_namespaces()
+        assert len(await repo.get_namespaces()) == 0
