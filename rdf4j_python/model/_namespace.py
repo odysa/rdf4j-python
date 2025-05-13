@@ -1,13 +1,11 @@
 from typing import Mapping
 
-from rdflib import URIRef
 from rdflib.namespace import Namespace as RdflibNamespace
 from rdflib.term import Identifier, Variable
 
+from rdf4j_python.model._term import IRI
+
 from ._base_model import _BaseModel
-
-
-class IRI(URIRef): ...
 
 
 class Namespace:

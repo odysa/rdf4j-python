@@ -1,13 +1,17 @@
+from typing import Iterable, Optional
+
 import httpx
 import rdflib
+import rdflib.resource
 
 from rdf4j_python import AsyncApiClient
+from rdf4j_python._driver._async_named_graph import AsyncNamedGraph
 from rdf4j_python.exception.repo_exception import (
     NamespaceException,
     RepositoryInternalException,
     RepositoryNotFoundException,
 )
-from rdf4j_python.model._namespace import IRI, Namespace
+from rdf4j_python.model import IdentifiedNode, Namespace, Node
 from rdf4j_python.utils.const import Rdf4jContentType
 
 
@@ -171,15 +175,19 @@ class AsyncRdf4JRepository:
         return int(response.text.strip())
 
     async def add_statement(
-        self, subject: IRI, predicate: IRI, object: IRI, context: IRI
+        self,
+        subject: Node,
+        predicate: Node,
+        object: Node,
+        context: Optional[IdentifiedNode] = None,
     ):
         """Adds a single RDF statement to the repository.
 
         Args:
-            subject (IRI): The subject of the triple.
-            predicate (IRI): The predicate of the triple.
-            object (IRI): The object of the triple.
-            context (IRI): The context (named graph).
+            subject (Node): The subject of the triple.
+            predicate (Node): The predicate of the triple.
+            object (Node): The object of the triple.
+            context (IdentifiedNode): The context (named graph).
 
         Raises:
             RepositoryNotFoundException: If the repository doesn't exist.
@@ -192,6 +200,20 @@ class AsyncRdf4JRepository:
             data=f"{subject} {predicate} {object} {context}.",
             headers=headers,
         )
+        self._handle_repo_not_found_exception(response)
+        response.raise_for_status()
+
+    async def add_statements(
+        self, statements: Iterable[tuple[Node, Node, Node, Optional[IdentifiedNode]]]
+    ):
+        """Adds a list of RDF statements to the repository.
+
+        Args:
+            statements (list[tuple[Node, Node, Node, Optional[IdentifiedNode]]]): A list of RDF statements.
+        """
+        path = f"/repositories/{self._repository_id}/statements"
+        headers = {"Content-Type": Rdf4jContentType.NTRIPLES.value}
+        response = await self._client.post(path, data=statements, headers=headers)
         self._handle_repo_not_found_exception(response)
         response.raise_for_status()
 
@@ -213,6 +235,14 @@ class AsyncRdf4JRepository:
         response = await self._client.put(path, data=rdf_data, headers=headers)
         self._handle_repo_not_found_exception(response)
         response.raise_for_status()
+
+    async def get_named_graph(self, graph: str) -> AsyncNamedGraph:
+        """Retrieves a named graph in the repository.
+
+        Returns:
+            AsyncNamedGraph: A named graph object.
+        """
+        return AsyncNamedGraph(self._client, self._repository_id, graph)
 
     def _handle_repo_not_found_exception(self, response: httpx.Response):
         """Raises a RepositoryNotFoundException if response is 404.
