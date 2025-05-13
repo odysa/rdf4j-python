@@ -13,12 +13,7 @@ dev = [
     "pytest-docker>=3.2.1",
     "ruff>=0.11.8",
 ]
-docs = [
-    "sphinx>=8",
-    "sphinx-rtd-theme>=3.0",
-    "sphinx_automodapi",
-    "myst_parser",
-]
+docs = ["sphinx>=8", "sphinx-rtd-theme>=3.0", "myst_parser"]
 
 
 [tool.pytest.ini_options]
