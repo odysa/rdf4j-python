@@ -31,7 +31,6 @@ source_suffix = {
 }
 
 templates_path = ["_templates"]
-exclude_patterns = []
 
 # -- Options for HTML output -------------------------------------------------
 
