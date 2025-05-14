@@ -12,11 +12,11 @@ class Rdf4jContentType(str, Enum):
     RDF_XML = "application/rdf+xml"
     RDF_JSON = "application/rdf+json"
     LD_JSON = "application/ld+json"
-    NTRIPLES = "application/n-triples"  # FIXED
+    NTRIPLES = "application/n-triples"
     TURTLE = "text/turtle"
-    N3 = "text/n3"  # FIXED
-    NQUADS = "application/n-quads"  # FIXED
-    TRIG = "application/trig"  # FIXED
+    N3 = "text/n3"
+    NQUADS = "application/n-quads"
+    TRIG = "application/trig"
     TRIX = "application/trix"
     BINARY_RDF = "application/x-binary-rdf"
 

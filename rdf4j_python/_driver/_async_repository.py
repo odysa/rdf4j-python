@@ -199,7 +199,7 @@ class AsyncRdf4JRepository:
             subject (Optional[Subject]): Filter by subject.
             predicate (Optional[Predicate]): Filter by predicate.
             object_ (Optional[Object]): Filter by object.
-            context (Optional[Context]): Filter by context (named graph).
+            contexts (Optional[list[Context]]): Filter by context (named graph).
 
         Returns:
             DataSet: Dataset of matching RDF statements.
