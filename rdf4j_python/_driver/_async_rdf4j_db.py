@@ -15,29 +15,53 @@ from ._async_repository import AsyncRdf4JRepository
 
 
 class AsyncRdf4j:
+    """Asynchronous entry point for interacting with an RDF4J server."""
+
     _client: AsyncApiClient
     _base_url: str
 
     def __init__(self, base_url: str):
+        """Initializes the RDF4J API client.
+
+        Args:
+            base_url (str): Base URL of the RDF4J server.
+        """
         self._base_url = base_url.rstrip("/")
 
     async def __aenter__(self):
+        """Enters the async context and initializes the HTTP client.
+
+        Returns:
+            AsyncRdf4j: The initialized RDF4J interface.
+        """
         self._client = await AsyncApiClient(base_url=self._base_url).__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
+        """Closes the HTTP client when exiting the async context."""
         await self._client.__aexit__(exc_type, exc_value, traceback)
 
     async def get_protocol_version(self) -> str:
+        """Fetches the RDF4J protocol version.
+
+        Returns:
+            str: The protocol version string.
+
+        Raises:
+            httpx.HTTPStatusError: If the request fails.
+        """
         response = await self._client.get("/protocol")
         response.raise_for_status()
         return response.text
 
     async def list_repositories(self) -> list[RepositoryMetadata]:
-        """
-        List all RDF4J repositories.
+        """Lists all available RDF4J repositories.
 
-        :return: List of repository information.
+        Returns:
+            list[RepositoryMetadata]: A list of repository metadata objects.
+
+        Raises:
+            httpx.HTTPStatusError: If the request fails.
         """
         response = await self._client.get(
             "/repositories",
@@ -46,18 +70,19 @@ class AsyncRdf4j:
         result = rdflib.query.Result.parse(
             response, format=Rdf4jContentType.SPARQL_RESULTS_JSON
         )
-
         return [
             RepositoryMetadata.from_rdflib_binding(binding)
             for binding in result.bindings
         ]
 
     async def get_repository(self, repository_id: str) -> AsyncRdf4JRepository:
-        """
-        Get an AsyncRepository instance for the specified repository ID.
+        """Gets an interface to a specific RDF4J repository.
 
-        :param repository_id: The ID of the repository.
-        :return: An instance of AsyncRepository.
+        Args:
+            repository_id (str): The ID of the repository.
+
+        Returns:
+            AsyncRdf4JRepository: An async interface for the repository.
         """
         return AsyncRdf4JRepository(self._client, repository_id)
 
@@ -67,19 +92,23 @@ class AsyncRdf4j:
         rdf_config_data: str,
         content_type: Union[Rdf4jContentType, str] = Rdf4jContentType.TURTLE,
     ) -> AsyncRdf4JRepository:
-        """
-        Create a new RDF4J repository.
+        """Creates a new RDF4J repository using RDF configuration.
 
-        :param repository_id: Repository ID to create.
-        :param rdf_config_data: RDF config in Turtle, RDF/XML, etc.
-        :param content_type: MIME type of RDF config.
+        Args:
+            repository_id (str): The repository ID to create.
+            rdf_config_data (str): RDF configuration in Turtle, RDF/XML, etc.
+            content_type (Union[Rdf4jContentType, str], optional): RDF MIME type. Defaults to Turtle.
+
+        Returns:
+            AsyncRdf4JRepository: An async interface to the newly created repository.
+
+        Raises:
+            RepositoryCreationException: If repository creation fails.
         """
         path = f"/repositories/{repository_id}"
-
         if isinstance(content_type, Rdf4jContentType):
             content_type = content_type.value
         headers = {"Content-Type": content_type}
-
         response: httpx.Response = await self._client.put(
             path, content=rdf_config_data, headers=headers
         )
@@ -90,10 +119,13 @@ class AsyncRdf4j:
         return AsyncRdf4JRepository(self._client, repository_id)
 
     async def delete_repository(self, repository_id: str):
-        """
-        Delete an RDF4J repository and its data/config.
+        """Deletes a repository and all its data and configuration.
 
-        :param repository_id: The repository ID to delete.
+        Args:
+            repository_id (str): The ID of the repository to delete.
+
+        Raises:
+            RepositoryDeletionException: If the deletion fails.
         """
         path = f"/repositories/{repository_id}"
         response = await self._client.delete(path)

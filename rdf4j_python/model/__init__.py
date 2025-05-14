@@ -1,10 +1,11 @@
-from ._namespace import IRI, Namespace
+from ._namespace import Namespace
 from ._repository_config import (
     MemoryStoreConfig,
     NativeStoreConfig,
     RepositoryConfig,
 )
 from ._repository_info import RepositoryMetadata
+from ._term import IRI, Context, Object, Predicate, RDFStatement, Subject
 
 __all__ = [
     "IRI",
@@ -13,4 +14,9 @@ __all__ = [
     "MemoryStoreConfig",
     "NativeStoreConfig",
     "RepositoryMetadata",
+    "Context",
+    "Object",
+    "Predicate",
+    "RDFStatement",
+    "Subject",
 ]

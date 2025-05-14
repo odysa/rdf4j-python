@@ -77,12 +77,12 @@ class AsyncApiClient(BaseClient):
     async def post(
         self,
         path: str,
-        data: Optional[Dict[str, Any]] = None,
+        content: Optional[str] = None,
         json: Optional[Any] = None,
         headers: Optional[Dict[str, str]] = None,
     ) -> httpx.Response:
         return await self.client.post(
-            self._build_url(path), data=data, json=json, headers=headers
+            self._build_url(path), content=content, json=json, headers=headers
         )
 
     async def put(
