@@ -3,6 +3,8 @@ from typing import Iterable, Optional
 import httpx
 import rdflib
 import rdflib.resource
+import rdflib.serializer
+import rdflib.store
 
 from rdf4j_python import AsyncApiClient
 from rdf4j_python._driver._async_named_graph import AsyncNamedGraph
@@ -10,8 +12,17 @@ from rdf4j_python.exception.repo_exception import (
     NamespaceException,
     RepositoryInternalException,
     RepositoryNotFoundException,
+    RepositoryUpdateException,
 )
-from rdf4j_python.model import IdentifiedNode, Namespace, Node
+from rdf4j_python.model import (
+    Context,
+    Namespace,
+    Object,
+    Predicate,
+    RDFStatement,
+    Subject,
+)
+from rdf4j_python.model._dataset import DataSet
 from rdf4j_python.utils.const import Rdf4jContentType
 
 
@@ -174,12 +185,97 @@ class AsyncRdf4JRepository:
 
         return int(response.text.strip())
 
+    async def get_statements(
+        self,
+        subject: Optional[Subject] = None,
+        predicate: Optional[Predicate] = None,
+        object_: Optional[Object] = None,
+        contexts: Optional[list[Context]] = None,
+        infer: bool = True,
+    ) -> DataSet:
+        """Retrieves statements matching the given pattern.
+
+        Args:
+            subject (Optional[Subject]): Filter by subject.
+            predicate (Optional[Predicate]): Filter by predicate.
+            object_ (Optional[Object]): Filter by object.
+            context (Optional[Context]): Filter by context (named graph).
+
+        Returns:
+            DataSet: Dataset of matching RDF statements.
+
+        Raises:
+            RepositoryNotFoundException: If the repository doesn't exist.
+        """
+        path = f"/repositories/{self._repository_id}/statements"
+        params = {}
+
+        if subject:
+            params["subj"] = subject.n3()
+        if predicate:
+            params["pred"] = predicate.n3()
+        if object_:
+            params["obj"] = object_.n3()
+        if contexts:
+            params["context"] = [ctx.n3() for ctx in contexts]
+        params["infer"] = str(infer).lower()
+
+        headers = {"Accept": Rdf4jContentType.NQUADS}
+        response = await self._client.get(path, params=params, headers=headers)
+        dataset = DataSet()
+        dataset.parse(data=response.text, format="nquads")
+        return dataset
+
+    async def delete_statements(
+        self,
+        subject: Optional[Subject] = None,
+        predicate: Optional[Predicate] = None,
+        object_: Optional[Object] = None,
+        contexts: Optional[list[Context]] = None,
+    ):
+        """Deletes statements from the repository matching the given pattern.
+
+        Args:
+            subject (Optional[Subject]): Filter by subject (N-Triples encoded).
+            predicate (Optional[Predicate]): Filter by predicate (N-Triples encoded).
+            object_ (Optional[Object]): Filter by object (N-Triples encoded).
+            contexts (Optional[list[Context]]): One or more specific contexts to restrict deletion to.
+                Use 'null' as a string to delete context-less statements.
+
+        Raises:
+            RepositoryNotFoundException: If the repository does not exist.
+            RepositoryUpdateException: If the deletion fails.
+        """
+        path = f"/repositories/{self._repository_id}/statements"
+        params = {}
+
+        if subject:
+            params["subj"] = subject.n3()
+        if predicate:
+            params["pred"] = predicate.n3()
+        if object_:
+            params["obj"] = object_.n3()
+        if contexts:
+            for ctx in contexts:
+                if ctx == "null":
+                    params.setdefault("context", []).append("null")
+                else:
+                    params.setdefault("context", []).append(ctx.n3())
+
+        response = await self._client.delete(path, params=params)
+        self._handle_repo_not_found_exception(response)
+
+        if response.status_code != httpx.codes.NO_CONTENT:
+            raise RepositoryUpdateException(
+                f"Failed to delete statements: {response.text}"
+            )
+
     async def add_statement(
         self,
-        subject: Node,
-        predicate: Node,
-        object: Node,
-        context: Optional[IdentifiedNode] = None,
+        subject: Subject,
+        predicate: Predicate,
+        object: Object,
+        context: Optional[Context] = None,
     ):
         """Adds a single RDF statement to the repository.
 
@@ -194,28 +290,37 @@ class AsyncRdf4JRepository:
             httpx.HTTPStatusError: If addition fails.
         """
         path = f"/repositories/{self._repository_id}/statements"
-        headers = {"Content-Type": Rdf4jContentType.NTRIPLES.value}
         response = await self._client.post(
             path,
-            data=f"{subject} {predicate} {object} {context}.",
-            headers=headers,
+            content=self._serialize_statements([(subject, predicate, object, context)]),
+            headers={"Content-Type": Rdf4jContentType.NQUADS},
         )
         self._handle_repo_not_found_exception(response)
-        response.raise_for_status()
+        if response.status_code != httpx.codes.NO_CONTENT:
+            raise RepositoryUpdateException(f"Failed to add statement: {response.text}")
 
-    async def add_statements(
-        self, statements: Iterable[tuple[Node, Node, Node, Optional[IdentifiedNode]]]
-    ):
+    async def add_statements(self, statements: Iterable[RDFStatement]):
         """Adds a list of RDF statements to the repository.
 
         Args:
-            statements (list[tuple[Node, Node, Node, Optional[IdentifiedNode]]]): A list of RDF statements.
+            statements (Iterable[RDFStatement]): A list of RDF statements.
+            RDFStatement: A tuple of subject, predicate, object, and context.
+
+        Raises:
+            RepositoryNotFoundException: If the repository doesn't exist.
+            httpx.HTTPStatusError: If addition fails.
         """
         path = f"/repositories/{self._repository_id}/statements"
-        headers = {"Content-Type": Rdf4jContentType.NTRIPLES.value}
-        response = await self._client.post(path, data=statements, headers=headers)
+        response = await self._client.post(
+            path,
+            content=self._serialize_statements(statements),
+            headers={"Content-Type": Rdf4jContentType.NQUADS},
+        )
         self._handle_repo_not_found_exception(response)
-        response.raise_for_status()
+        if response.status_code != httpx.codes.NO_CONTENT:
+            raise RepositoryUpdateException(
+                f"Failed to add statements: {response.text}"
+            )
 
     async def replace_statements(
         self, rdf_data: str, content_type: Rdf4jContentType = Rdf4jContentType.TURTLE
@@ -257,3 +362,18 @@ class AsyncRdf4JRepository:
             raise RepositoryNotFoundException(
                 f"Repository {self._repository_id} not found"
             )
+
+    def _serialize_statements(self, statements: Iterable[RDFStatement]):
+        """Serializes statements to RDF data.
+
+        Args:
+            statements (Iterable[RDFStatement]): RDF statements.
+        """
+        lines = []
+        for subj, pred, obj, ctx in statements:
+            parts = [subj.n3(), pred.n3(), obj.n3()]
+            if ctx:
+                parts.append(ctx.n3())
+            parts.append(".")
+            lines.append(" ".join(parts))
+        return "\n".join(lines) + "\n"

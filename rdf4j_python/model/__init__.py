@@ -5,15 +5,7 @@ from ._repository_config import (
     RepositoryConfig,
 )
 from ._repository_info import RepositoryMetadata
-from ._term import (
-    IRI,
-    BlankNode,
-    IdentifiedNode,
-    Identifier,
-    Literal,
-    Node,
-    Variable,
-)
+from ._term import IRI, Context, Object, Predicate, RDFStatement, Subject
 
 __all__ = [
     "IRI",
@@ -22,10 +14,9 @@ __all__ = [
     "MemoryStoreConfig",
     "NativeStoreConfig",
     "RepositoryMetadata",
-    "Literal",
-    "Node",
-    "Variable",
-    "IdentifiedNode",
-    "BlankNode",
-    "Identifier",
+    "Context",
+    "Object",
+    "Predicate",
+    "RDFStatement",
+    "Subject",
 ]
