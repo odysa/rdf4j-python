@@ -256,11 +256,7 @@ class AsyncRdf4JRepository:
         if object_:
             params["obj"] = object_.n3()
         if contexts:
-            for ctx in contexts:
-                if ctx == "null":
-                    params.setdefault("context", []).append("null")
-                else:
-                    params.setdefault("context", []).append(ctx.n3())
+            params["context"] = [ctx.n3() for ctx in contexts]
 
         response = await self._client.delete(path, params=params)
         self._handle_repo_not_found_exception(response)
@@ -323,23 +319,41 @@ class AsyncRdf4JRepository:
             )
 
     async def replace_statements(
-        self, rdf_data: str, content_type: Rdf4jContentType = Rdf4jContentType.TURTLE
+        self,
+        statements: Iterable[RDFStatement],
+        contexts: Optional[list[Context]] = None,
+        base_uri: Optional[str] = None,
     ):
         """Replaces all repository statements with the given RDF data.
 
         Args:
-            rdf_data (str): RDF statements to load.
-            content_type (Rdf4jContentType): RDF serialization format.
+            statements (Iterable[RDFStatement]): RDF statements to load.
+            contexts (Optional[list[Context]]): One or more specific contexts to restrict deletion to.
 
         Raises:
             RepositoryNotFoundException: If the repository doesn't exist.
             httpx.HTTPStatusError: If the operation fails.
         """
         path = f"/repositories/{self._repository_id}/statements"
-        headers = {"Content-Type": content_type.value}
-        response = await self._client.put(path, data=rdf_data, headers=headers)
+        headers = {"Content-Type": Rdf4jContentType.NQUADS.value}
+
+        params = {}
+        if contexts:
+            params["context"] = [ctx.n3() for ctx in contexts]
+        if base_uri:
+            params["baseUri"] = base_uri
+
+        response = await self._client.put(
+            path,
+            content=self._serialize_statements(statements),
+            headers=headers,
+            params=params,
+        )
         self._handle_repo_not_found_exception(response)
-        response.raise_for_status()
+        if response.status_code != httpx.codes.NO_CONTENT:
+            raise RepositoryUpdateException(
+                f"Failed to replace statements: {response.text}"
+            )
 
     async def get_named_graph(self, graph: str) -> AsyncNamedGraph:
         """Retrieves a named graph in the repository.
