@@ -89,14 +89,24 @@ class AsyncApiClient(BaseClient):
         self,
         path: str,
         content: Optional[bytes] = None,
+        params: Optional[Dict[str, Any]] = None,
         json: Optional[Any] = None,
         headers: Optional[Dict[str, str]] = None,
     ) -> httpx.Response:
         return await self.client.put(
-            self._build_url(path), content=content, json=json, headers=headers
+            self._build_url(path),
+            content=content,
+            json=json,
+            headers=headers,
+            params=params,
         )
 
     async def delete(
-        self, path: str, headers: Optional[Dict[str, str]] = None
+        self,
+        path: str,
+        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> httpx.Response:
-        return await self.client.delete(self._build_url(path), headers=headers)
+        return await self.client.delete(
+            self._build_url(path), params=params, headers=headers
+        )
