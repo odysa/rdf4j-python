@@ -1,10 +1,16 @@
+from typing import Iterable
+
+from rdf4j_python._client._client import AsyncApiClient
+from rdf4j_python.model._dataset import RDF4JDataSet
+from rdf4j_python.model._term import IRI, RDFStatement
 from rdf4j_python.utils.const import Rdf4jContentType
+from rdf4j_python.utils.helpers import serialize_statements
 
 
 class AsyncNamedGraph:
     """Asynchronous interface for operations on a specific RDF4J named graph."""
 
-    def __init__(self, client, repository_id: str, graph_uri: str):
+    def __init__(self, client: AsyncApiClient, repository_id: str, graph_uri: str):
         """Initializes the AsyncNamedGraph.
 
         Args:
@@ -16,12 +22,8 @@ class AsyncNamedGraph:
         self._repository_id = repository_id
         self._graph_uri = graph_uri
 
-    async def get(self, accept: Rdf4jContentType = Rdf4jContentType.TURTLE) -> str:
+    async def get(self) -> RDF4JDataSet:
         """Fetches all RDF statements from this named graph.
-
-        Args:
-            accept (Rdf4jContentType, optional): The desired RDF response format.
-                Defaults to Turtle.
 
         Returns:
             str: RDF data serialized in the requested format.
@@ -30,27 +32,25 @@ class AsyncNamedGraph:
             httpx.HTTPStatusError: If the request fails.
         """
         path = f"/repositories/{self._repository_id}/rdf-graphs/{self._graph_uri}"
-        headers = {"Accept": accept.value}
+        headers = {"Accept": Rdf4jContentType.NQUADS}
         response = await self._client.get(path, headers=headers)
         response.raise_for_status()
-        return response.text
+        return RDF4JDataSet.from_raw_text(response.text)
 
-    async def add(
-        self, rdf_data: str, content_type: Rdf4jContentType = Rdf4jContentType.TURTLE
-    ):
+    async def add(self, statements: Iterable[RDFStatement]):
         """Adds RDF statements to this named graph.
 
         Args:
-            rdf_data (str): RDF content to add.
-            content_type (Rdf4jContentType, optional): Serialization format of input RDF data.
-                Defaults to Turtle.
+            statements (Iterable[RDFStatement]): RDF statements to add.
 
         Raises:
             httpx.HTTPStatusError: If the request fails.
         """
         path = f"/repositories/{self._repository_id}/rdf-graphs/{self._graph_uri}"
-        headers = {"Content-Type": content_type.value}
-        response = await self._client.post(path, data=rdf_data, headers=headers)
+        headers = {"Content-Type": Rdf4jContentType.NQUADS}
+        response = await self._client.post(
+            path, content=serialize_statements(statements), headers=headers
+        )
         response.raise_for_status()
 
     async def clear(self):
@@ -64,10 +64,12 @@ class AsyncNamedGraph:
         response.raise_for_status()
 
     @property
-    def uri(self) -> str:
-        """Returns the URI of the named graph.
+    def iri(self) -> IRI:
+        """Returns the IRI of the named graph.
 
         Returns:
-            str: The graph URI.
+            str: The graph IRI.
         """
-        return self._graph_uri
+        return IRI(
+            f"{self._client.get_base_url()}/repositories/{self._repository_id}/rdf-graphs/{self._graph_uri}"
+        )

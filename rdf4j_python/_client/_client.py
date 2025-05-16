@@ -11,6 +11,9 @@ class BaseClient:
     def _build_url(self, path: str) -> str:
         return f"{self.base_url}/{path.lstrip('/')}"
 
+    def get_base_url(self) -> str:
+        return self.base_url
+
 
 class SyncApiClient(BaseClient):
     def __enter__(self):

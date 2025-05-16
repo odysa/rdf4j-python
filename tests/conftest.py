@@ -48,6 +48,7 @@ async def mem_repo(rdf4j_service: str, random_mem_repo_config: RepositoryConfig)
             content_type=Rdf4jContentType.TURTLE,
         )
         yield repo
+        await db.delete_repository(random_mem_repo_config.repo_id)
 
 
 @pytest.fixture(scope="function")
