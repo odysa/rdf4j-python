@@ -7,7 +7,8 @@ on:
     branches: ["develop", "main"]
 
 jobs:
-  build:
+  lint-and-test:
+    name: Lint and Test
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -30,7 +31,7 @@ jobs:
         run: uv sync --locked --all-extras --dev
 
       - name: Lint with Ruff
-        run: uv run ruff check .
+        run: ruff check .
 
       - name: Run tests
-        run: uv run pytest tests
+        run: pytest tests
