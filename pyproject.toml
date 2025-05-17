@@ -1,5 +1,6 @@
 [project]
 name = "rdf4j-python"
+authors = [{ name = "Chengxu Bian", email = "cbian564@gmail.com" }]
 version = "0.1.1a"
 description = "The Python client for RDF4J"
 readme = "README.md"
@@ -13,7 +14,7 @@ dev = [
     "pytest-docker>=3.2.1",
     "ruff>=0.11.8",
 ]
-docs = ["sphinx>=8", "sphinx-rtd-theme>=3.0", "myst_parser"]
+docs = ["sphinx>=8", "sphinx-rtd-theme>=3.0"]
 
 
 [tool.pytest.ini_options]
