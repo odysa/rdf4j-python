@@ -5,7 +5,7 @@ from ._repository_config import (
     RepositoryConfig,
 )
 from ._repository_info import RepositoryMetadata
-from ._term import IRI, Context, Object, Predicate, RDFStatement, Subject
+from ._term import IRI, Context, Object, Predicate, RDF4JDataSet, RDFStatement, Subject
 
 __all__ = [
     "IRI",
@@ -19,4 +19,5 @@ __all__ = [
     "Predicate",
     "RDFStatement",
     "Subject",
+    "RDF4JDataSet",
 ]
