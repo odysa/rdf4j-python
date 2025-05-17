@@ -1,8 +1,7 @@
 import pytest
 
 from rdf4j_python import AsyncRdf4j
-from rdf4j_python.model import RepositoryConfig
-from rdf4j_python.utils.const import Rdf4jContentType
+from rdf4j_python.model import MemoryStoreConfig, RepositoryConfig
 
 
 def get_repo_config(name: str):
@@ -22,13 +21,13 @@ def get_repo_config(name: str):
 
 
 @pytest.mark.asyncio
-async def test_create_repo(rdf4j_service: str):
+async def test_create_repo(
+    rdf4j_service: str, random_mem_repo_config: RepositoryConfig
+):
     async with AsyncRdf4j(rdf4j_service) as db:
         repo_id = "test_create_repo"
         await db.create_repository(
-            repository_id=repo_id,
-            rdf_config_data=get_repo_config(repo_id),
-            content_type=Rdf4jContentType.TURTLE,
+            config=random_mem_repo_config,
         )
         repos = await db.list_repositories()
         assert len(repos) == 1
@@ -38,19 +37,18 @@ async def test_create_repo(rdf4j_service: str):
 
 
 @pytest.mark.asyncio
-async def test_delete_repo(rdf4j_service: str):
+async def test_delete_repo(
+    rdf4j_service: str, random_mem_repo_config: RepositoryConfig
+):
     async with AsyncRdf4j(rdf4j_service) as db:
-        repo_id = "test_delete_repo"
         await db.create_repository(
-            repository_id=repo_id,
-            rdf_config_data=get_repo_config(repo_id),
-            content_type=Rdf4jContentType.TURTLE,
+            config=random_mem_repo_config,
         )
         repos = await db.list_repositories()
         assert len(repos) == 1
-        assert repos[0].id == repo_id
-        assert repos[0].title == repo_id
-        await db.delete_repository(repo_id)
+        assert repos[0].id == random_mem_repo_config.repo_id
+        assert repos[0].title == random_mem_repo_config.repo_id
+        await db.delete_repository(random_mem_repo_config.repo_id)
         repos = await db.list_repositories()
         assert len(repos) == 0
 
@@ -63,10 +61,16 @@ async def test_list_repos(rdf4j_service: str):
         assert len(repos) == 0
         for repo in range(repo_count):
             repo_id = f"test_list_repos_{repo}"
+            repo_config = (
+                RepositoryConfig.Builder()
+                .repo_id(repo_id)
+                .sail_repository_impl(
+                    MemoryStoreConfig.Builder().persist(False).build()
+                )
+                .build()
+            )
             await db.create_repository(
-                repository_id=repo_id,
-                rdf_config_data=get_repo_config(repo_id),
-                content_type=Rdf4jContentType.TURTLE,
+                config=repo_config,
             )
         repos = await db.list_repositories()
         assert len(repos) == repo_count
@@ -82,7 +86,5 @@ async def test_create_memory_store_repo(
 ):
     async with AsyncRdf4j(rdf4j_service) as db:
         await db.create_repository(
-            repository_id=random_mem_repo_config.repo_id,
-            rdf_config_data=random_mem_repo_config.to_turtle(),
-            content_type=Rdf4jContentType.TURTLE,
+            config=random_mem_repo_config,
         )

@@ -10,7 +10,6 @@ from rdf4j_python.model._repository_config import (
     MemoryStoreConfig,
     RepositoryConfig,
 )
-from rdf4j_python.utils.const import Rdf4jContentType
 
 LOGGER = logging.getLogger(__name__)
 
@@ -43,9 +42,7 @@ async def mem_repo(rdf4j_service: str, random_mem_repo_config: RepositoryConfig)
 
     async with AsyncRdf4j(rdf4j_service) as db:
         repo = await db.create_repository(
-            repository_id=random_mem_repo_config.repo_id,
-            rdf_config_data=random_mem_repo_config.to_turtle(),
-            content_type=Rdf4jContentType.TURTLE,
+            config=random_mem_repo_config,
         )
         yield repo
         await db.delete_repository(random_mem_repo_config.repo_id)
@@ -56,13 +53,11 @@ def random_mem_repo_config() -> RepositoryConfig:
     """Fixture that yields a random memory repository configuration."""
     repo_id = f"test_repo_{str(randint(1, 1000000))}"
     return (
-        RepositoryConfig.builder_with_sail_repository(
-            MemoryStoreConfig.Builder()
-            .persist(False)
-            .iteration_cache_sync_threshold(1000)
-            .build(),
-        )
+        RepositoryConfig.Builder()
         .repo_id(repo_id)
         .title(repo_id)
+        .sail_repository_impl(
+            MemoryStoreConfig.Builder().persist(False).build(),
+        )
         .build()
     )

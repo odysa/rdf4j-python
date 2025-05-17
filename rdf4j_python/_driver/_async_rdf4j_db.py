@@ -1,5 +1,3 @@
-from typing import Union
-
 import httpx
 import rdflib
 
@@ -8,6 +6,7 @@ from rdf4j_python.exception.repo_exception import (
     RepositoryCreationException,
     RepositoryDeletionException,
 )
+from rdf4j_python.model._repository_config import RepositoryConfig
 from rdf4j_python.model._repository_info import RepositoryMetadata
 from rdf4j_python.utils.const import Rdf4jContentType
 
@@ -88,16 +87,13 @@ class AsyncRdf4j:
 
     async def create_repository(
         self,
-        repository_id: str,
-        rdf_config_data: str,
-        content_type: Union[Rdf4jContentType, str] = Rdf4jContentType.TURTLE,
+        config: RepositoryConfig,
     ) -> AsyncRdf4JRepository:
         """Creates a new RDF4J repository using RDF configuration.
 
         Args:
             repository_id (str): The repository ID to create.
-            rdf_config_data (str): RDF configuration in Turtle, RDF/XML, etc.
-            content_type (Union[Rdf4jContentType, str], optional): RDF MIME type. Defaults to Turtle.
+            config (RepositoryConfig): RDF configuration.
 
         Returns:
             AsyncRdf4JRepository: An async interface to the newly created repository.
@@ -105,18 +101,16 @@ class AsyncRdf4j:
         Raises:
             RepositoryCreationException: If repository creation fails.
         """
-        path = f"/repositories/{repository_id}"
-        if isinstance(content_type, Rdf4jContentType):
-            content_type = content_type.value
-        headers = {"Content-Type": content_type}
+        path = f"/repositories/{config.repo_id}"
+        headers = {"Content-Type": Rdf4jContentType.TURTLE}
         response: httpx.Response = await self._client.put(
-            path, content=rdf_config_data, headers=headers
+            path, content=config.to_turtle(), headers=headers
         )
         if response.status_code != httpx.codes.NO_CONTENT:
             raise RepositoryCreationException(
                 f"Repository creation failed: {response.status_code} - {response.text}"
             )
-        return AsyncRdf4JRepository(self._client, repository_id)
+        return AsyncRdf4JRepository(self._client, config.repo_id)
 
     async def delete_repository(self, repository_id: str):
         """Deletes a repository and all its data and configuration.
