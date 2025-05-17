@@ -4,7 +4,7 @@ import datetime
 import os
 import sys
 
-from ..rdf4j_python import __author__, __version__
+from rdf4j_python import __author__, __version__
 
 # -- Path setup --------------------------------------------------------------
 
