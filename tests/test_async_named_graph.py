@@ -3,7 +3,7 @@ from rdflib import Literal
 
 from rdf4j_python._driver._async_repository import AsyncRdf4JRepository
 from rdf4j_python.model._term import IRI
-from rdf4j_python.model.volcabulary import EXAMPLE as ex
+from rdf4j_python.model.vocabulary import EXAMPLE as ex
 
 
 @pytest.mark.asyncio

@@ -7,8 +7,8 @@ from rdf4j_python.exception.repo_exception import (
     RepositoryNotFoundException,
 )
 from rdf4j_python.model._term import IRI
-from rdf4j_python.model.volcabulary import EXAMPLE as ex
-from rdf4j_python.model.volcabulary import RDF, RDFS
+from rdf4j_python.model.vocabulary import EXAMPLE as ex
+from rdf4j_python.model.vocabulary import RDF, RDFS
 
 ex_ns = ex.namespace
 rdf_ns = RDF.namespace
