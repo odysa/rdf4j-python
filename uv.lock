@@ -397,7 +397,7 @@ wheels = [
 
 [[package]]
 name = "rdf4j-python"
-version = "0.1.1a0"
+version = "0.1.2"
 source = { virtual = "." }
 dependencies = [
     { name = "httpx" },
