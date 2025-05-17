@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  rdf4j:
+    image: eclipse/rdf4j-workbench:latest
+    ports:
+      - '19780:8080'
+    restart: unless-stopped
