@@ -4,7 +4,7 @@ import datetime
 import os
 import sys
 
-import rdf4j_python
+from ..rdf4j_python import __author__, __version__
 
 # -- Path setup --------------------------------------------------------------
 
@@ -14,10 +14,10 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "rdf4j-python"
-copyright = f"{datetime.date.today().year}, {rdf4j_python.__author__}"
-author = rdf4j_python.__author__
-version = rdf4j_python.__version__
-release = rdf4j_python.__version__
+copyright = f"{datetime.date.today().year}, {__author__}"
+author = __author__
+version = __version__
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 
@@ -26,10 +26,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",  # for Google/NumPy-style docstrings
     "sphinx.ext.viewcode",
-    "sphinx.ext.autosummary",
 ]
-
-autosummary_generate = True
 
 autodoc_default_options = {
     "members": True,

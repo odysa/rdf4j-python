@@ -41,8 +41,3 @@ Install via pip:
    :caption: Contents:
 
    modules
-
-.. autosummary::
-   :toctree: _autosummary
-   :template: custom-module-template.rst
-   :recursive:
