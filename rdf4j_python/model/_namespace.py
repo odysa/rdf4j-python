@@ -10,9 +10,7 @@ from ._base_model import _BaseModel
 
 class Namespace:
     """
-    Represents an RDF namespace with a prefix, wrapping RDFLib's Namespace.
-
-    Provides utility methods for accessing terms as IRIs and working with SPARQL bindings.
+    Represents a namespace in RDF4J.
     """
 
     _prefix: str
@@ -20,11 +18,11 @@ class Namespace:
 
     def __init__(self, prefix: str, namespace: str):
         """
-        Initializes a Namespace instance.
+        Initializes a new Namespace.
 
         Args:
-            prefix (str): The namespace prefix (e.g., "ex").
-            namespace (str): The full namespace URI (e.g., "http://example.org/").
+            prefix (str): The prefix of the namespace.
+            namespace (str): The namespace URI.
         """
         self._prefix = prefix
         self._namespace = RdflibNamespace(namespace)
@@ -32,84 +30,84 @@ class Namespace:
     @classmethod
     def from_rdflib_binding(cls, binding: Mapping[Variable, Identifier]) -> "Namespace":
         """
-        Constructs a Namespace instance from a SPARQL result binding.
+        Creates a Namespace from a RDFlib binding.
 
         Args:
-            binding (Mapping[Variable, Identifier]): A mapping of variables from a SPARQL query result.
+            binding (Mapping[Variable, Identifier]): The RDFlib binding.
 
         Returns:
-            Namespace: The resulting Namespace instance.
+            Namespace: The created Namespace.
         """
         prefix = _BaseModel.get_literal(binding, "prefix", "")
         namespace = _BaseModel.get_literal(binding, "namespace", "")
-        return cls(prefix=prefix, namespace=namespace)
+        return cls(
+            prefix=prefix,
+            namespace=namespace,
+        )
 
-    def __str__(self) -> str:
+    def __str__(self):
         """
-        Returns a human-readable string representation.
+        Returns a string representation of the Namespace.
 
         Returns:
-            str: The string representation (e.g., "ex: http://example.org/").
+            str: A string representation of the Namespace.
         """
         return f"{self._prefix}: {self._namespace}"
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         """
-        Returns a detailed string representation for debugging.
+        Returns a string representation of the Namespace.
 
         Returns:
-            str: The formal representation of the object.
+            str: A string representation of the Namespace.
         """
         return f"Namespace(prefix={self._prefix}, namespace={self._namespace})"
 
     def __contains__(self, item: str) -> bool:
         """
-        Checks whether a term exists in the namespace.
+        Checks if the Namespace contains a given item.
 
         Args:
-            item (str): The term to check.
+            item (str): The item to check.
 
         Returns:
-            bool: True if the term exists, False otherwise.
+            bool: True if the Namespace contains the item, False otherwise.
         """
         return item in self._namespace
 
     def term(self, name: str) -> IRI:
         """
-        Returns the IRI corresponding to a given term name.
+        Returns the IRI for a given term.
 
         Args:
-            name (str): The local name of the term.
+            name (str): The term name.
 
         Returns:
-            IRI: The full IRI for the term.
+            IRI: The IRI for the term.
         """
         return IRI(self._namespace.term(name))
 
     def __getitem__(self, item: str) -> IRI:
         """
-        Enables dictionary-style access to terms.
+        Returns the IRI for a given term.
 
         Args:
             item (str): The term name.
 
         Returns:
-            IRI: The IRI for the given term.
+            IRI: The IRI for the term.
         """
         return self.term(item)
 
     def __getattr__(self, item: str) -> IRI:
         """
-        Enables dot-access to terms (e.g., ns.person).
+        Returns the IRI for a given term.
 
         Args:
             item (str): The term name.
 
         Returns:
-            IRI: The IRI for the given term.
-
-        Raises:
-            AttributeError: If the attribute is special (starts with "__").
+            IRI: The IRI for the term.
         """
         if item.startswith("__"):
             raise AttributeError
@@ -118,7 +116,7 @@ class Namespace:
     @property
     def namespace(self) -> IRI:
         """
-        Returns the full namespace as an IRI.
+        Returns the namespace URI.
 
         Returns:
             IRI: The namespace URI.
@@ -131,6 +129,6 @@ class Namespace:
         Returns the prefix of the namespace.
 
         Returns:
-            str: The namespace prefix.
+            str: The prefix of the namespace.
         """
         return self._prefix
