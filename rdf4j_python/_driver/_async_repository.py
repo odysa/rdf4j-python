@@ -22,8 +22,9 @@ from rdf4j_python.model import (
     RDFStatement,
     Subject,
 )
-from rdf4j_python.model._dataset import DataSet
+from rdf4j_python.model._dataset import RDF4JDataSet
 from rdf4j_python.utils.const import Rdf4jContentType
+from rdf4j_python.utils.helpers import serialize_statements
 
 
 class AsyncRdf4JRepository:
@@ -192,7 +193,7 @@ class AsyncRdf4JRepository:
         object_: Optional[Object] = None,
         contexts: Optional[list[Context]] = None,
         infer: bool = True,
-    ) -> DataSet:
+    ) -> RDF4JDataSet:
         """Retrieves statements matching the given pattern.
 
         Args:
@@ -222,7 +223,7 @@ class AsyncRdf4JRepository:
 
         headers = {"Accept": Rdf4jContentType.NQUADS}
         response = await self._client.get(path, params=params, headers=headers)
-        dataset = DataSet()
+        dataset = RDF4JDataSet()
         dataset.parse(data=response.text, format="nquads")
         return dataset
 
@@ -288,7 +289,7 @@ class AsyncRdf4JRepository:
         path = f"/repositories/{self._repository_id}/statements"
         response = await self._client.post(
             path,
-            content=self._serialize_statements([(subject, predicate, object, context)]),
+            content=serialize_statements([(subject, predicate, object, context)]),
             headers={"Content-Type": Rdf4jContentType.NQUADS},
         )
         self._handle_repo_not_found_exception(response)
@@ -309,7 +310,7 @@ class AsyncRdf4JRepository:
         path = f"/repositories/{self._repository_id}/statements"
         response = await self._client.post(
             path,
-            content=self._serialize_statements(statements),
+            content=serialize_statements(statements),
             headers={"Content-Type": Rdf4jContentType.NQUADS},
         )
         self._handle_repo_not_found_exception(response)
@@ -345,7 +346,7 @@ class AsyncRdf4JRepository:
 
         response = await self._client.put(
             path,
-            content=self._serialize_statements(statements),
+            content=serialize_statements(statements),
             headers=headers,
             params=params,
         )
@@ -377,17 +378,6 @@ class AsyncRdf4JRepository:
                 f"Repository {self._repository_id} not found"
             )
 
-    def _serialize_statements(self, statements: Iterable[RDFStatement]):
-        """Serializes statements to RDF data.
-
-        Args:
-            statements (Iterable[RDFStatement]): RDF statements.
-        """
-        lines = []
-        for subj, pred, obj, ctx in statements:
-            parts = [subj.n3(), pred.n3(), obj.n3()]
-            if ctx:
-                parts.append(ctx.n3())
-            parts.append(".")
-            lines.append(" ".join(parts))
-        return "\n".join(lines) + "\n"
+    @property
+    def repository_id(self) -> str:
+        return self._repository_id

@@ -6,12 +6,13 @@ from rdf4j_python.exception.repo_exception import (
     NamespaceException,
     RepositoryNotFoundException,
 )
-from rdf4j_python.model import IRI, Namespace
+from rdf4j_python.model._term import IRI
+from rdf4j_python.model.vocabulary import EXAMPLE as ex
+from rdf4j_python.model.vocabulary import RDF, RDFS
 
-ex_ns = "http://example.org/"
-rdf_ns = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-rdfs_ns = "http://www.w3.org/2000/01/rdf-schema#"
-ex = Namespace("ex", ex_ns)
+ex_ns = ex.namespace
+rdf_ns = RDF.namespace
+rdfs_ns = RDFS.namespace
 
 
 @pytest.mark.asyncio
