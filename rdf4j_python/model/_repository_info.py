@@ -19,7 +19,12 @@ class RepositoryMetadata(_BaseModel):
     writable: bool  # Whether the repository is writable
 
     def __str__(self):
-        # Custom string representation for easy printing
+        """
+        Returns a string representation of the RepositoryMetadata.
+
+        Returns:
+            str: A string representation of the RepositoryMetadata.
+        """
         return f"Repository(id={self.id}, title={self.title}, uri={self.uri})"
 
     @classmethod
@@ -29,6 +34,12 @@ class RepositoryMetadata(_BaseModel):
         """
         Create a Repository instance from a SPARQL query result
         represented as a Mapping from rdflib Variables to Identifiers.
+
+        Args:
+            result (Mapping[Variable, Identifier]): The SPARQL query result.
+
+        Returns:
+            RepositoryMetadata: The RepositoryMetadata instance.
         """
 
         # Construct and return the Repository object

@@ -9,7 +9,7 @@ CONFIG = Namespace("tag:rdf4j.org,2023:config/")
 
 class RepositoryConfig:
     """
-    Represents the configuration for an RDF4J Repository using RDFlib.
+    Represents the configuration for an RDF4J Repository.
     """
 
     _repo_id: str
@@ -22,21 +22,49 @@ class RepositoryConfig:
         title: Optional[str] = None,
         impl: Optional["RepositoryImplConfig"] = None,
     ):
+        """
+        Initializes a new RepositoryConfig instance.
+
+        Args:
+            repo_id (str): The unique identifier for the repository.
+            title (Optional[str], optional): A human-readable title for the repository. Defaults to None.
+            impl (Optional[RepositoryImplConfig], optional): The implementation configuration for the repository. Defaults to None.
+        """
         self._repo_id = repo_id
         self._title = title
         self._impl = impl
 
     @property
     def repo_id(self) -> str:
+        """
+        Returns the repository ID.
+
+        Returns:
+            str: The repository ID.
+        """
         return self._repo_id
 
     @property
     def title(self) -> Optional[str]:
+        """
+        Returns the human-readable title for the repository.
+
+        Returns:
+            Optional[str]: The human-readable title for the repository, or None if not set.
+        """
         return self._title
 
     def to_turtle(self) -> str:
         """
         Serializes the Repository configuration to Turtle syntax using RDFlib.
+
+        Returns:
+            str: A UTF-8 encoded Turtle string representing the RDF4J repository configuration.
+                The serialization includes the repository ID, optional human-readable title,
+                and nested repository implementation configuration if available.
+
+        Raises:
+            ValueError: If any of the configuration values are of unsupported types during serialization.
         """
         graph = Graph()
         graph.bind("rdfs", RDFS)
@@ -58,10 +86,16 @@ class RepositoryConfig:
 
     class Builder:
         """
-        Builder class for creating RepositoryConfig instances.
+        Builder for creating RepositoryConfig instances.
         """
 
         def __init__(self, repo_id: Optional[str] = None):
+            """
+            Initializes a new RepositoryConfig.Builder instance.
+
+            Args:
+                repo_id (Optional[str], optional): The unique identifier for the repository. Defaults to None.
+            """
             self._repo_id = repo_id
             self._title: Optional[str] = None
             self._impl: Optional["RepositoryImplConfig"] = None
@@ -69,6 +103,12 @@ class RepositoryConfig:
         def repo_id(self, repo_id: str) -> "RepositoryConfig.Builder":
             """
             Sets the repository ID.
+
+            Args:
+                repo_id (str): The unique identifier for the repository.
+
+            Returns:
+                RepositoryConfig.Builder: The builder instance.
             """
             self._repo_id = repo_id
             return self
@@ -76,6 +116,12 @@ class RepositoryConfig:
         def title(self, title: str) -> "RepositoryConfig.Builder":
             """
             Sets the human-readable title for the repository.
+
+            Args:
+                title (str): The human-readable title for the repository.
+
+            Returns:
+                RepositoryConfig.Builder: The builder instance.
             """
             self._title = title
             return self
@@ -83,6 +129,12 @@ class RepositoryConfig:
         def repo_impl(self, impl: "RepositoryImplConfig") -> "RepositoryConfig.Builder":
             """
             Sets the repository implementation configuration.
+
+            Args:
+                impl (RepositoryImplConfig): The implementation configuration for the repository.
+
+            Returns:
+                RepositoryConfig.Builder: The builder instance.
             """
             self._impl = impl
             return self
@@ -92,6 +144,12 @@ class RepositoryConfig:
         ) -> "RepositoryConfig.Builder":
             """
             Sets the repository implementation configuration to a SailRepositoryConfig.
+
+            Args:
+                sail_impl (SailConfig): The Sail configuration for the repository.
+
+            Returns:
+                RepositoryConfig.Builder: The builder instance.
             """
             self.repo_impl(SailRepositoryConfig.Builder().sail_impl(sail_impl).build())
             return self
@@ -99,6 +157,9 @@ class RepositoryConfig:
         def build(self) -> "RepositoryConfig":
             """
             Builds and returns the RepositoryConfig instance.
+
+            Returns:
+                RepositoryConfig: The constructed RepositoryConfig instance.
             """
             return RepositoryConfig(
                 repo_id=self._repo_id, title=self._title, impl=self._impl
@@ -157,6 +218,13 @@ class SPARQLRepositoryConfig(RepositoryImplConfig):
     TYPE = "openrdf:SPARQLRepository"
 
     def __init__(self, query_endpoint: str, update_endpoint: Optional[str] = None):
+        """
+        Initializes a new SPARQLRepositoryConfig instance.
+
+        Args:
+            query_endpoint (str): The SPARQL query endpoint URL.
+            update_endpoint (Optional[str], optional): The SPARQL update endpoint URL. Defaults to None.
+        """
         super().__init__(rep_type=SPARQLRepositoryConfig.TYPE)
         self.config_params["sparql.queryEndpoint"] = query_endpoint
         if update_endpoint:
@@ -164,12 +232,27 @@ class SPARQLRepositoryConfig(RepositoryImplConfig):
 
     class Builder:
         def __init__(self, query_endpoint: str):
+            """
+            Initializes a new SPARQLRepositoryConfig.Builder instance.
+
+            Args:
+                query_endpoint (str): The SPARQL query endpoint URL.
+            """
             self._query_endpoint = query_endpoint
             self._update_endpoint: Optional[str] = None
 
         def update_endpoint(
             self, update_endpoint: str
         ) -> "SPARQLRepositoryConfig.Builder":
+            """
+            Sets the SPARQL update endpoint URL.
+
+            Args:
+                update_endpoint (str): The SPARQL update endpoint URL.
+
+            Returns:
+                SPARQLRepositoryConfig.Builder: The builder instance.
+            """
             self._update_endpoint = update_endpoint
             return self
 
@@ -204,10 +287,28 @@ class HTTPRepositoryConfig(RepositoryImplConfig):
             self._password: Optional[str] = None
 
         def username(self, username: str) -> "HTTPRepositoryConfig.Builder":
+            """
+            Sets the username for the HTTP repository.
+
+            Args:
+                username (str): The username for the HTTP repository.
+
+            Returns:
+                HTTPRepositoryConfig.Builder: The builder instance.
+            """
             self._username = username
             return self
 
         def password(self, password: str) -> "HTTPRepositoryConfig.Builder":
+            """
+            Sets the password for the HTTP repository.
+
+            Args:
+                password (str): The password for the HTTP repository.
+
+            Returns:
+                HTTPRepositoryConfig.Builder: The builder instance.
+            """
             self._password = password
             return self
 
@@ -239,10 +340,25 @@ class SailRepositoryConfig(RepositoryImplConfig):
             self._sail_impl = sail_impl
 
         def sail_impl(self, sail_impl: "SailConfig") -> "SailRepositoryConfig.Builder":
+            """
+            Sets the Sail configuration for the repository.
+
+            Args:
+                sail_impl (SailConfig): The Sail configuration for the repository.
+
+            Returns:
+                SailRepositoryConfig.Builder: The builder instance.
+            """
             self._sail_impl = sail_impl
             return self
 
         def build(self) -> "SailRepositoryConfig":
+            """
+            Builds and returns the SailRepositoryConfig instance.
+
+            Returns:
+                SailRepositoryConfig: The constructed SailRepositoryConfig instance.
+            """
             return SailRepositoryConfig(sail_impl=self._sail_impl)
 
 
@@ -361,22 +477,58 @@ class MemoryStoreConfig(SailConfig):
             self._default_query_evaluation_mode: Optional[str] = None
 
         def persist(self, persist: bool) -> "MemoryStoreConfig.Builder":
+            """
+            Sets the persist flag for the MemoryStore configuration.
+
+            Args:
+                persist (bool): The persist flag for the MemoryStore configuration.
+
+            Returns:
+                MemoryStoreConfig.Builder: The builder instance.
+            """
             self._persist = persist
             return self
 
         def sync_delay(self, sync_delay: int) -> "MemoryStoreConfig.Builder":
+            """
+            Sets the sync delay for the MemoryStore configuration.
+
+            Args:
+                sync_delay (int): The sync delay for the MemoryStore configuration.
+
+            Returns:
+                MemoryStoreConfig.Builder: The builder instance.
+            """
             self._sync_delay = sync_delay
             return self
 
         def iteration_cache_sync_threshold(
             self, threshold: int
         ) -> "MemoryStoreConfig.Builder":
+            """
+            Sets the iteration cache sync threshold for the MemoryStore configuration.
+
+            Args:
+                threshold (int): The iteration cache sync threshold for the MemoryStore configuration.
+
+            Returns:
+                MemoryStoreConfig.Builder: The builder instance.
+            """
             self._iteration_cache_sync_threshold = threshold
             return self
 
         def default_query_evaluation_mode(
             self, mode: str
         ) -> "MemoryStoreConfig.Builder":
+            """
+            Sets the default query evaluation mode for the MemoryStore configuration.
+
+            Args:
+                mode (str): The default query evaluation mode for the MemoryStore configuration.
+
+            Returns:
+                MemoryStoreConfig.Builder: The builder instance.
+            """
             self._default_query_evaluation_mode = mode
             return self
 
@@ -437,38 +589,110 @@ class NativeStoreConfig(SailConfig):
             self._default_query_evaluation_mode: Optional[str] = None
 
         def triple_indexes(self, indexes: str) -> "NativeStoreConfig.Builder":
+            """
+            Sets the triple indexes for the NativeStore configuration.
+
+            Args:
+                indexes (str): The triple indexes for the NativeStore configuration.
+
+            Returns:
+                NativeStoreConfig.Builder: The builder instance.
+            """
             self._triple_indexes = indexes
             return self
 
         def force_sync(self, sync: bool) -> "NativeStoreConfig.Builder":
+            """
+            Sets the force sync flag for the NativeStore configuration.
+
+            Args:
+                sync (bool): The force sync flag for the NativeStore configuration.
+
+            Returns:
+                NativeStoreConfig.Builder: The builder instance.
+            """
             self._force_sync = sync
             return self
 
         def value_cache_size(self, size: int) -> "NativeStoreConfig.Builder":
+            """
+            Sets the value cache size for the NativeStore configuration.
+
+            Args:
+                size (int): The value cache size for the NativeStore configuration.
+
+            Returns:
+                NativeStoreConfig.Builder: The builder instance.
+            """
             self._value_cache_size = size
             return self
 
         def value_id_cache_size(self, size: int) -> "NativeStoreConfig.Builder":
+            """
+            Sets the value ID cache size for the NativeStore configuration.
+
+            Args:
+                size (int): The value ID cache size for the NativeStore configuration.
+
+            Returns:
+                NativeStoreConfig.Builder: The builder instance.
+            """
             self._value_id_cache_size = size
             return self
 
         def namespace_cache_size(self, size: int) -> "NativeStoreConfig.Builder":
+            """
+            Sets the namespace cache size for the NativeStore configuration.
+
+            Args:
+                size (int): The namespace cache size for the NativeStore configuration.
+
+            Returns:
+                NativeStoreConfig.Builder: The builder instance.
+            """
             self._namespace_cache_size = size
             return self
 
         def namespace_id_cache_size(self, size: int) -> "NativeStoreConfig.Builder":
+            """
+            Sets the namespace ID cache size for the NativeStore configuration.
+
+            Args:
+                size (int): The namespace ID cache size for the NativeStore configuration.
+
+            Returns:
+                NativeStoreConfig.Builder: The builder instance.
+            """
             self._namespace_id_cache_size = size
             return self
 
         def iteration_cache_sync_threshold(
             self, threshold: int
         ) -> "NativeStoreConfig.Builder":
+            """
+            Sets the iteration cache sync threshold for the NativeStore configuration.
+
+            Args:
+                threshold (int): The iteration cache sync threshold for the NativeStore configuration.
+
+            Returns:
+                NativeStoreConfig.Builder: The builder instance.
+            """
             self._iteration_cache_sync_threshold = threshold
             return self
 
         def default_query_evaluation_mode(
             self, mode: str
         ) -> "NativeStoreConfig.Builder":
+            """
+            Sets the default query evaluation mode for the NativeStore configuration.
+
+            Args:
+                mode (str): The default query evaluation mode for the NativeStore configuration.
+
+            Returns:
+                NativeStoreConfig.Builder: The builder instance.
+            """
             self._default_query_evaluation_mode = mode
             return self
 
@@ -524,30 +748,81 @@ class ElasticsearchStoreConfig(SailConfig):
             self._default_query_evaluation_mode: Optional[str] = None
 
         def port(self, port: int) -> "ElasticsearchStoreConfig.Builder":
+            """
+            Sets the port for the ElasticsearchStore configuration.
+
+            Args:
+                port (int): The port for the ElasticsearchStore configuration.
+
+            Returns:
+                ElasticsearchStoreConfig.Builder: The builder instance.
+            """
             self._port = port
             return self
 
         def cluster_name(self, cluster_name: str) -> "ElasticsearchStoreConfig.Builder":
+            """
+            Sets the cluster name for the ElasticsearchStore configuration.
+
+            Args:
+                cluster_name (str): The cluster name for the ElasticsearchStore configuration.
+
+            Returns:
+                ElasticsearchStoreConfig.Builder: The builder instance.
+            """
             self._cluster_name = cluster_name
             return self
 
         def index(self, index: str) -> "ElasticsearchStoreConfig.Builder":
+            """
+            Sets the index for the ElasticsearchStore configuration.
+
+            Args:
+                index (str): The index for the ElasticsearchStore configuration.
+
+            Returns:
+                ElasticsearchStoreConfig.Builder: The builder instance.
+            """
             self._index = index
             return self
 
         def iteration_cache_sync_threshold(
             self, threshold: int
         ) -> "ElasticsearchStoreConfig.Builder":
+            """
+            Sets the iteration cache sync threshold for the ElasticsearchStore configuration.
+
+            Args:
+                threshold (int): The iteration cache sync threshold for the ElasticsearchStore configuration.
+
+            Returns:
+                ElasticsearchStoreConfig.Builder: The builder instance.
+            """
             self._iteration_cache_sync_threshold = threshold
             return self
 
         def default_query_evaluation_mode(
             self, mode: str
         ) -> "ElasticsearchStoreConfig.Builder":
+            """
+            Sets the default query evaluation mode for the ElasticsearchStore configuration.
+
+            Args:
+                mode (str): The default query evaluation mode for the ElasticsearchStore configuration.
+
+            Returns:
+                ElasticsearchStoreConfig.Builder: The builder instance.
+            """
             self._default_query_evaluation_mode = mode
             return self
 
         def build(self) -> "ElasticsearchStoreConfig":
+            """
+            Builds and returns the ElasticsearchStoreConfig instance.
+
+            Returns:
+                ElasticsearchStoreConfig: The constructed ElasticsearchStoreConfig instance.
+            """
             return ElasticsearchStoreConfig(
                 hostname=self._hostname,
                 port=self._port,
@@ -571,6 +846,14 @@ class SchemaCachingRDFSInferencerConfig(SailConfig):
         iteration_cache_sync_threshold: Optional[int] = None,
         default_query_evaluation_mode: Optional[str] = None,
     ):
+        """
+        Initializes a new SchemaCachingRDFSInferencerConfig.
+
+        Args:
+            delegate (SailConfig): The delegate configuration for the SchemaCachingRDFSInferencer.
+            iteration_cache_sync_threshold (Optional[int]): The iteration cache sync threshold.
+            default_query_evaluation_mode (Optional[str]): The default query evaluation mode.
+        """
         super().__init__(
             sail_type=SchemaCachingRDFSInferencerConfig.TYPE,
             iteration_cache_sync_threshold=iteration_cache_sync_threshold,
@@ -581,6 +864,12 @@ class SchemaCachingRDFSInferencerConfig(SailConfig):
     def add_to_graph(self, graph: Graph) -> URIRef:
         """
         Adds the SchemaCachingRDFSInferencer configuration to the RDF graph.
+
+        Args:
+            graph (Graph): The RDF graph to add the configuration to.
+
+        Returns:
+            URIRef: The URIRef of the added configuration.
         """
         sail_node = super().add_to_graph(graph)
         delegate_node = self.config_params["delegate"].to_rdf(graph)
@@ -596,16 +885,40 @@ class SchemaCachingRDFSInferencerConfig(SailConfig):
         def iteration_cache_sync_threshold(
             self, threshold: int
         ) -> "SchemaCachingRDFSInferencerConfig.Builder":
+            """
+            Sets the iteration cache sync threshold for the SchemaCachingRDFSInferencer configuration.
+
+            Args:
+                threshold (int): The iteration cache sync threshold for the SchemaCachingRDFSInferencer configuration.
+
+            Returns:
+                SchemaCachingRDFSInferencerConfig.Builder: The builder instance.
+            """
             self._iteration_cache_sync_threshold = threshold
             return self
 
         def default_query_evaluation_mode(
             self, mode: str
         ) -> "SchemaCachingRDFSInferencerConfig.Builder":
+            """
+            Sets the default query evaluation mode for the SchemaCachingRDFSInferencer configuration.
+
+            Args:
+                mode (str): The default query evaluation mode for the SchemaCachingRDFSInferencer configuration.
+
+            Returns:
+                SchemaCachingRDFSInferencerConfig.Builder: The builder instance.
+            """
             self._default_query_evaluation_mode = mode
             return self
 
         def build(self) -> "SchemaCachingRDFSInferencerConfig":
+            """
+            Builds and returns the SchemaCachingRDFSInferencerConfig instance.
+
+            Returns:
+                SchemaCachingRDFSInferencerConfig: The constructed SchemaCachingRDFSInferencerConfig instance.
+            """
             return SchemaCachingRDFSInferencerConfig(
                 delegate=self._delegate,
                 iteration_cache_sync_threshold=self._iteration_cache_sync_threshold,
@@ -626,6 +939,14 @@ class DirectTypeHierarchyInferencerConfig(SailConfig):
         iteration_cache_sync_threshold: Optional[int] = None,
         default_query_evaluation_mode: Optional[str] = None,
     ):
+        """
+        Initializes a new DirectTypeHierarchyInferencerConfig.
+
+        Args:
+            delegate (SailConfig): The delegate configuration for the DirectTypeHierarchyInferencer.
+            iteration_cache_sync_threshold (Optional[int]): The iteration cache sync threshold.
+            default_query_evaluation_mode (Optional[str]): The default query evaluation mode.
+        """
         super().__init__(
             sail_type=DirectTypeHierarchyInferencerConfig.TYPE,
             iteration_cache_sync_threshold=iteration_cache_sync_threshold,
@@ -636,6 +957,12 @@ class DirectTypeHierarchyInferencerConfig(SailConfig):
     def add_to_graph(self, graph: Graph) -> URIRef:
         """
         Adds the DirectTypeHierarchyInferencerConfig to the graph
+
+        Args:
+            graph (Graph): The RDF graph to add the configuration to.
+
+        Returns:
+            URIRef: The URIRef of the added configuration.
         """
         sail_node = super().add_to_graph(graph)
         delegate_node = self.config_params["delegate"].to_rdf(graph)
@@ -644,6 +971,12 @@ class DirectTypeHierarchyInferencerConfig(SailConfig):
 
     class Builder:
         def __init__(self, delegate: "SailConfig"):
+            """
+            Initializes a new DirectTypeHierarchyInferencerConfig.Builder.
+
+            Args:
+                delegate (SailConfig): The delegate configuration for the DirectTypeHierarchyInferencer.
+            """
             self._delegate = delegate
             self._iteration_cache_sync_threshold: Optional[int] = None
             self._default_query_evaluation_mode: Optional[str] = None
@@ -651,16 +984,40 @@ class DirectTypeHierarchyInferencerConfig(SailConfig):
         def iteration_cache_sync_threshold(
             self, threshold: int
         ) -> "DirectTypeHierarchyInferencerConfig.Builder":
+            """
+            Sets the iteration cache sync threshold for the DirectTypeHierarchyInferencer configuration.
+
+            Args:
+                threshold (int): The iteration cache sync threshold for the DirectTypeHierarchyInferencer configuration.
+
+            Returns:
+                DirectTypeHierarchyInferencerConfig.Builder: The builder instance.
+            """
             self._iteration_cache_sync_threshold = threshold
             return self
 
         def default_query_evaluation_mode(
             self, mode: str
         ) -> "DirectTypeHierarchyInferencerConfig.Builder":
+            """
+            Sets the default query evaluation mode for the DirectTypeHierarchyInferencer configuration.
+
+            Args:
+                mode (str): The default query evaluation mode for the DirectTypeHierarchyInferencer configuration.
+
+            Returns:
+                DirectTypeHierarchyInferencerConfig.Builder: The builder instance.
+            """
             self._default_query_evaluation_mode = mode
             return self
 
         def build(self) -> "DirectTypeHierarchyInferencerConfig":
+            """
+            Builds and returns the DirectTypeHierarchyInferencerConfig instance.
+
+            Returns:
+                DirectTypeHierarchyInferencerConfig: The constructed DirectTypeHierarchyInferencerConfig instance.
+            """
             return DirectTypeHierarchyInferencerConfig(
                 delegate=self._delegate,
                 iteration_cache_sync_threshold=self._iteration_cache_sync_threshold,
@@ -696,6 +1053,29 @@ class SHACLSailConfig(SailConfig):
         iteration_cache_sync_threshold: Optional[int] = None,
         default_query_evaluation_mode: Optional[str] = None,
     ):
+        """
+        Initializes a new SHACLSailConfig.
+
+        Args:
+            delegate (SailConfig): The delegate configuration for the SHACL Sail.
+            parallel_validation (Optional[bool]): Whether to enable parallel validation.
+            undefined_target_validates_all_subjects (Optional[bool]): Whether to validate all subjects when undefined targets are encountered.
+            log_validation_plans (Optional[bool]): Whether to log validation plans.
+            log_validation_violations (Optional[bool]): Whether to log validation violations.
+            ignore_no_shapes_loaded_exception (Optional[bool]): Whether to ignore exceptions when no shapes are loaded.
+            validation_enabled (Optional[bool]): Whether to enable validation.
+            cache_select_nodes (Optional[bool]): Whether to cache select nodes.
+            global_log_validation_execution (Optional[bool]): Whether to log validation execution globally.
+            rdfs_sub_class_reasoning (Optional[bool]): Whether to enable RDFS sub-class reasoning.
+            performance_logging (Optional[bool]): Whether to enable performance logging.
+            serializable_validation (Optional[bool]): Whether to enable serializable validation.
+            eclipse_rdf4j_shacl_extensions (Optional[bool]): Whether to enable Eclipse RDF4J SHACL extensions.
+            dash_data_shapes (Optional[bool]): Whether to enable Dash Data Shapes.
+            validation_results_limit_total (Optional[int]): The total number of validation results to limit.
+            validation_results_limit_per_constraint (Optional[int]): The number of validation results to limit per constraint.
+            iteration_cache_sync_threshold (Optional[int]): The iteration cache sync threshold.
+            default_query_evaluation_mode (Optional[str]): The default query evaluation mode.
+        """
         super().__init__(
             sail_type=SHACLSailConfig.TYPE,
             iteration_cache_sync_threshold=iteration_cache_sync_threshold,
@@ -748,7 +1128,15 @@ class SHACLSailConfig(SailConfig):
             )
 
     def add_to_graph(self, graph: Graph) -> URIRef:
-        """Adds the SHACLSailConfig to the RDF graph."""
+        """
+        Adds the SHACLSailConfig to the RDF graph.
+
+        Args:
+            graph (Graph): The RDF graph to add the configuration to.
+
+        Returns:
+            URIRef: The URIRef of the added configuration.
+        """
         sail_node = super().add_to_graph(graph)  # Get the basic node
         delegate_node = self.config_params["delegate"].to_rdf(graph)
         graph.add((sail_node, CONFIG.delegate, delegate_node))
@@ -770,6 +1158,12 @@ class SHACLSailConfig(SailConfig):
 
     class Builder:
         def __init__(self, delegate: "SailConfig"):
+            """
+            Initializes a new SHACLSailConfig.Builder.
+
+            Args:
+                delegate (SailConfig): The delegate configuration for the SHACL Sail.
+            """
             self._delegate = delegate
             self._parallel_validation: Optional[bool] = None
             self._undefined_target_validates_all_subjects: Optional[bool] = None
@@ -790,88 +1184,247 @@ class SHACLSailConfig(SailConfig):
             self._default_query_evaluation_mode: Optional[str] = None
 
         def parallel_validation(self, value: bool) -> "SHACLSailConfig.Builder":
+            """
+            Sets the parallel validation flag for the SHACL Sail configuration.
+
+            Args:
+                value (bool): The parallel validation flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._parallel_validation = value
             return self
 
         def undefined_target_validates_all_subjects(
             self, value: bool
         ) -> "SHACLSailConfig.Builder":
+            """
+            Sets the undefined target validates all subjects flag for the SHACL Sail configuration.
+
+            Args:
+                value (bool): The undefined target validates all subjects flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._undefined_target_validates_all_subjects = value
             return self
 
         def log_validation_plans(self, value: bool) -> "SHACLSailConfig.Builder":
+            """
+            Sets the log validation plans flag for the SHACL Sail configuration.
+
+            Args:
+                value (bool): The log validation plans flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._log_validation_plans = value
             return self
 
         def log_validation_violations(self, value: bool) -> "SHACLSailConfig.Builder":
+            """
+            Sets the log validation violations flag for the SHACL Sail configuration.
+
+            Args:
+                value (bool): The log validation violations flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._log_validation_violations = value
             return self
 
         def ignore_no_shapes_loaded_exception(
             self, value: bool
         ) -> "SHACLSailConfig.Builder":
+            """
+            Sets the ignore no shapes loaded exception flag for the SHACL Sail configuration.
+
+            Args:
+                value (bool): The ignore no shapes loaded exception flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._ignore_no_shapes_loaded_exception = value
             return self
 
         def validation_enabled(self, value: bool) -> "SHACLSailConfig.Builder":
+            """
+            Sets the validation enabled flag for the SHACL Sail configuration.
+
+            Args:
+                value (bool): The validation enabled flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._validation_enabled = value
             return self
 
         def cache_select_nodes(self, value: bool) -> "SHACLSailConfig.Builder":
+            """
+            Sets the cache select nodes flag for the SHACL Sail configuration.
+
+            Args:
+                value (bool): The cache select nodes flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._cache_select_nodes = value
             return self
 
         def global_log_validation_execution(
             self, value: bool
         ) -> "SHACLSailConfig.Builder":
+            """
+            Sets the global log validation execution flag for the SHACL Sail configuration.
+
+            Args:
+                value (bool): The global log validation execution flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._global_log_validation_execution = value
             return self
 
         def rdfs_sub_class_reasoning(self, value: bool) -> "SHACLSailConfig.Builder":
+            """
+            Sets the RDFS sub-class reasoning flag for the SHACL Sail configuration.
+
+            Args:
+                value (bool): The RDFS sub-class reasoning flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._rdfs_sub_class_reasoning = value
             return self
 
         def performance_logging(self, value: bool) -> "SHACLSailConfig.Builder":
+            """
+            Sets the performance logging flag for the SHACL Sail configuration.
+
+            Args:
+                value (bool): The performance logging flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._performance_logging = value
             return self
 
         def serializable_validation(self, value: bool) -> "SHACLSailConfig.Builder":
+            """
+            Sets the serializable validation flag for the SHACL Sail configuration.
+
+            Args:
+                value (bool): The serializable validation flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._serializable_validation = value
             return self
 
         def eclipse_rdf4j_shacl_extensions(
             self, value: bool
         ) -> "SHACLSailConfig.Builder":
+            """
+            Sets the Eclipse RDF4J SHACL extensions flag for the SHACL Sail configuration.
+
+            Args:
+                value (bool): The Eclipse RDF4J SHACL extensions flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._eclipse_rdf4j_shacl_extensions = value
             return self
 
         def dash_data_shapes(self, value: bool) -> "SHACLSailConfig.Builder":
+            """
+            Sets the Dash Data Shapes flag for the SHACL Sail configuration.
+
+            Args:
+                value (bool): The Dash Data Shapes flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._dash_data_shapes = value
             return self
 
         def validation_results_limit_total(
             self, value: int
         ) -> "SHACLSailConfig.Builder":
+            """
+            Sets the validation results limit total flag for the SHACL Sail configuration.
+
+            Args:
+                value (int): The validation results limit total flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._validation_results_limit_total = value
             return self
 
         def validation_results_limit_per_constraint(
             self, value: int
         ) -> "SHACLSailConfig.Builder":
+            """
+            Sets the validation results limit per constraint flag for the SHACL Sail configuration.
+
+            Args:
+                value (int): The validation results limit per constraint flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._validation_results_limit_per_constraint = value
             return self
 
         def iteration_cache_sync_threshold(
             self, threshold: int
         ) -> "SHACLSailConfig.Builder":
+            """
+            Sets the iteration cache sync threshold flag for the SHACL Sail configuration.
+
+            Args:
+                threshold (int): The iteration cache sync threshold flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._iteration_cache_sync_threshold = threshold
             return self
 
         def default_query_evaluation_mode(self, mode: str) -> "SHACLSailConfig.Builder":
+            """
+            Sets the default query evaluation mode flag for the SHACL Sail configuration.
+
+            Args:
+                mode (str): The default query evaluation mode flag for the SHACL Sail configuration.
+
+            Returns:
+                SHACLSailConfig.Builder: The builder instance.
+            """
             self._default_query_evaluation_mode = mode
             return self
 
         def build(self) -> "SHACLSailConfig":
+            """
+            Builds the SHACLSailConfig.
+
+            Returns:
+                SHACLSailConfig: The built SHACLSailConfig.
+            """
             return SHACLSailConfig(
                 delegate=self._delegate,
                 parallel_validation=self._parallel_validation,

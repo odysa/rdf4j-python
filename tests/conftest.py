@@ -6,7 +6,7 @@ import pytest
 import pytest_asyncio
 
 from rdf4j_python._driver._async_rdf4j_db import AsyncRdf4j
-from rdf4j_python.model._repository_config import (
+from rdf4j_python.model.repository_config import (
     MemoryStoreConfig,
     RepositoryConfig,
 )

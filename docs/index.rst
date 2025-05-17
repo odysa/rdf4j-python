@@ -42,6 +42,3 @@ Install via pip:
    :recursive:
 
    rdf4j_python
-   rdf4j_python.model
-   rdf4j_python.utils
-   rdf4j_python.exception
