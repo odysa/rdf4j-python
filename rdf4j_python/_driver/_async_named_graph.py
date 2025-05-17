@@ -1,7 +1,8 @@
 from typing import Iterable
 
 from rdf4j_python._client import AsyncApiClient
-from rdf4j_python.model import IRI, RDF4JDataSet, RDFStatement
+from rdf4j_python.model import RDF4JDataSet
+from rdf4j_python.model.term import IRI, RDFStatement
 from rdf4j_python.utils.const import Rdf4jContentType
 from rdf4j_python.utils.helpers import serialize_statements
 

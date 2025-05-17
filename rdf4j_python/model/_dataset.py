@@ -1,6 +1,6 @@
 from rdflib import Dataset as _Dataset
 
-from rdf4j_python.model._term import IRI
+from rdf4j_python.model.term import IRI
 
 
 class RDF4JDataSet(_Dataset):

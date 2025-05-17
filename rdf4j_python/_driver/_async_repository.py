@@ -14,12 +14,11 @@ from rdf4j_python.exception.repo_exception import (
     RepositoryNotFoundException,
     RepositoryUpdateException,
 )
-from rdf4j_python.model import (
+from rdf4j_python.model import Namespace, RDF4JDataSet
+from rdf4j_python.model.term import (
     Context,
-    Namespace,
     Object,
     Predicate,
-    RDF4JDataSet,
     RDFStatement,
     Subject,
 )

@@ -6,7 +6,7 @@ from rdf4j_python.exception.repo_exception import (
     NamespaceException,
     RepositoryNotFoundException,
 )
-from rdf4j_python.model._term import IRI
+from rdf4j_python.model.term import IRI
 from rdf4j_python.model.vocabulary import EXAMPLE as ex
 from rdf4j_python.model.vocabulary import RDF, RDFS
 
