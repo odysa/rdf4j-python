@@ -13,5 +13,4 @@ __all__ = [
     "RDFStatement",
     "Subject",
     "RDF4JDataSet",
-    "SailRepositoryConfig",
 ]

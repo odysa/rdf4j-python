@@ -1,13 +1,13 @@
 import httpx
 import rdflib
 
-from rdf4j_python import AsyncApiClient
+from rdf4j_python._client import AsyncApiClient
 from rdf4j_python.exception.repo_exception import (
     RepositoryCreationException,
     RepositoryDeletionException,
 )
-from rdf4j_python.model.repository_config import RepositoryConfig
 from rdf4j_python.model._repository_info import RepositoryMetadata
+from rdf4j_python.model.repository_config import RepositoryConfig
 from rdf4j_python.utils.const import Rdf4jContentType
 
 from ._async_repository import AsyncRdf4JRepository
