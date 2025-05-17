@@ -13,8 +13,8 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "rdf4j-python"
 copyright = f"{datetime.date.today().year}, Chengxu Bian"
 author = "Chengxu Bian"
-version = "0.1.1a"
-release = "0.1.1a"
+version = "0.1.2"
+release = "0.1.2"
 
 # -- General configuration ---------------------------------------------------
 
