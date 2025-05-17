@@ -8,15 +8,13 @@ import sys
 
 sys.path.insert(0, os.path.abspath(".."))
 
-from rdf4j_python import __version__
-
 # -- Project information -----------------------------------------------------
 
 project = "rdf4j-python"
 copyright = f"{datetime.date.today().year}, Chengxu Bian"
 author = "Chengxu Bian"
-version = __version__
-release = __version__
+version = "0.1.1a"
+release = "0.1.1a"
 
 # -- General configuration ---------------------------------------------------
 
