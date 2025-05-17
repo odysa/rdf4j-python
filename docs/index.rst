@@ -3,6 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. toctree::
+   :hidden:
+
+   Home page <self>
+   API reference <_autosummary/rdf4j_python>
 Welcome to rdf4j-python's documentation!
 ========================================
 
