@@ -34,11 +34,3 @@ Install via pip:
 .. code-block:: bash
 
    pip install rdf4j-python
-
-
-.. autosummary::
-   :toctree: _autosummary
-   :template: custom-module-template.rst
-   :recursive:
-
-   rdf4j_python
