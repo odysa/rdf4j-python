@@ -2,20 +2,19 @@
 
 
 # -- Path setup --------------------------------------------------------------
+import datetime
 import os
 import sys
 
 sys.path.insert(0, os.path.abspath(".."))
 
-import datetime
-
-from rdf4j_python import __authors__, __version__
+from rdf4j_python import __version__
 
 # -- Project information -----------------------------------------------------
 
 project = "rdf4j-python"
-copyright = f"{datetime.date.today().year}, {__authors__[0]['name']}"
-author = __authors__[0]["name"]
+copyright = f"{datetime.date.today().year}, Chengxu Bian"
+author = "Chengxu Bian"
 version = __version__
 release = __version__
 
