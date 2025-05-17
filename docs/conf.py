@@ -1,15 +1,15 @@
 # Configuration file for the Sphinx documentation builder.
 
-import datetime
+
+# -- Path setup --------------------------------------------------------------
 import os
 import sys
 
-from rdf4j_python import __author__, __version__
-
-# -- Path setup --------------------------------------------------------------
-
-# If your module is in the parent directory, add it to sys.path
 sys.path.insert(0, os.path.abspath(".."))
+
+import datetime
+
+from rdf4j_python import __author__, __version__
 
 # -- Project information -----------------------------------------------------
 
