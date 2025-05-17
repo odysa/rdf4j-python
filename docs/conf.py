@@ -19,11 +19,13 @@ release = "0.1.1a"
 # -- General configuration ---------------------------------------------------
 
 extensions = [
-    "sphinx.ext.apidoc",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",  # for Google/NumPy-style docstrings
     "sphinx.ext.viewcode",
+    "sphinx.ext.autosummary",
 ]
+
+autosummary_generate = True
 
 autodoc_default_options = {
     "members": True,

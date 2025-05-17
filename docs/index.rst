@@ -36,8 +36,7 @@ Install via pip:
    pip install rdf4j-python
 
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-   modules
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-module-template.rst
+   :recursive:
