@@ -1,25 +1,29 @@
 import asyncio
 
+from rdflib import Literal
+
 from rdf4j_python import AsyncRdf4j
-from rdf4j_python.model import MemoryStoreConfig, RepositoryConfig
-from rdf4j_python.utils.const import Rdf4jContentType
+from rdf4j_python.model import IRI, MemoryStoreConfig, RepositoryConfig
 
 
 async def main():
     async with AsyncRdf4j("http://localhost:19780/rdf4j-server") as db:
         repo_config = (
-            RepositoryConfig.builder_with_sail_repository(
+            RepositoryConfig.Builder()
+            .repo_id("example-repo-2")
+            .title("Example Repository")
+            .sail_repository_impl(
                 MemoryStoreConfig.Builder().persist(False).build(),
             )
-            .repo_id("example-repo")
-            .title("Example Repository")
             .build()
         )
-        await db.create_repository(
-            repository_id=repo_config.repo_id,
-            rdf_config_data=repo_config.to_turtle(),
-            content_type=Rdf4jContentType.TURTLE,
+        repo = await db.create_repository(config=repo_config)
+        await repo.add_statement(
+            IRI("http://example.com/subject"),
+            IRI("http://example.com/predicate"),
+            Literal("test_object"),
         )
+        await repo.get_statements(subject=IRI("http://example.com/subject"))
 
 
 if __name__ == "__main__":

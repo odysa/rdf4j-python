@@ -31,24 +31,23 @@ pip install rdf4j-python
 Here's a basic example of how to use `rdf4j-python` to create an in-memory sail repository
 
 ```python
-from rdf4j_python import AsyncRdf4j
-from rdf4j_python.model import MemoryStoreConfig, RepositoryConfig
-from rdf4j_python.utils.const import Rdf4jContentType
-
 async with AsyncRdf4j("http://localhost:19780/rdf4j-server") as db:
     repo_config = (
-        RepositoryConfig.builder_with_sail_repository(
-            MemoryStoreConfig.Builder().persist(False).build(),
-        )
+        RepositoryConfig.Builder()
         .repo_id("example-repo")
         .title("Example Repository")
+        .sail_repository_impl(
+            MemoryStoreConfig.Builder().persist(False).build(),
+        )
         .build()
     )
-    await db.create_repository(
-        repository_id=repo_config.repo_id,
-        rdf_config_data=repo_config.to_turtle(),
-        content_type=Rdf4jContentType.TURTLE,
+    repo = await db.create_repository(config=repo_config)
+    await repo.add_statement(
+        IRI("http://example.com/subject"),
+        IRI("http://example.com/predicate"),
+        Literal("test_object"),
     )
+    await repo.get_statements(subject=IRI("http://example.com/subject"))
 ```
 
 For more detailed examples, refer to the [examples](https://github.com/odysa/rdf4j-python/tree/main/examples) directory.
