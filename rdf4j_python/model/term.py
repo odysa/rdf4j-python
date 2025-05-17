@@ -1,7 +1,3 @@
-"""
-Wrapper for rdflib.term classes.
-"""
-
 from typing import Optional, Tuple, TypeAlias
 
 from rdflib import URIRef as _URIRef

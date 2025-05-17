@@ -1,7 +1,7 @@
 import pytest
 
 from rdf4j_python import AsyncRdf4j
-from rdf4j_python.model import MemoryStoreConfig, RepositoryConfig
+from rdf4j_python.model.repository_config import MemoryStoreConfig, RepositoryConfig
 
 
 @pytest.mark.asyncio

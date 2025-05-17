@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from rdf4j_python.model._term import RDFStatement
+from rdf4j_python.model.term import RDFStatement
 
 
 def serialize_statements(statements: Iterable[RDFStatement]) -> str:

@@ -1,7 +1,8 @@
 import pytest
 from rdflib import Literal, Variable
 
-from rdf4j_python.model import IRI, Namespace
+from rdf4j_python.model import Namespace
+from rdf4j_python.model.term import IRI
 
 
 def test_namespace():

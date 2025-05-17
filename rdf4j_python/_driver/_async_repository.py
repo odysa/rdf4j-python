@@ -6,7 +6,7 @@ import rdflib.resource
 import rdflib.serializer
 import rdflib.store
 
-from rdf4j_python import AsyncApiClient
+from rdf4j_python._client import AsyncApiClient
 from rdf4j_python._driver._async_named_graph import AsyncNamedGraph
 from rdf4j_python.exception.repo_exception import (
     NamespaceException,
@@ -14,15 +14,14 @@ from rdf4j_python.exception.repo_exception import (
     RepositoryNotFoundException,
     RepositoryUpdateException,
 )
-from rdf4j_python.model import (
+from rdf4j_python.model import Namespace, RDF4JDataSet
+from rdf4j_python.model.term import (
     Context,
-    Namespace,
     Object,
     Predicate,
     RDFStatement,
     Subject,
 )
-from rdf4j_python.model._dataset import RDF4JDataSet
 from rdf4j_python.utils.const import Rdf4jContentType
 from rdf4j_python.utils.helpers import serialize_statements
 

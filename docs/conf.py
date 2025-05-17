@@ -1,18 +1,19 @@
 # Configuration file for the Sphinx documentation builder.
 
+
+# -- Path setup --------------------------------------------------------------
+import datetime
 import os
 import sys
 
-# -- Path setup --------------------------------------------------------------
-
-# If your module is in the parent directory, add it to sys.path
 sys.path.insert(0, os.path.abspath(".."))
 
 # -- Project information -----------------------------------------------------
 
 project = "rdf4j-python"
-copyright = "2025, Chengxu Bian"
+copyright = f"{datetime.date.today().year}, Chengxu Bian"
 author = "Chengxu Bian"
+version = "0.1.1a"
 release = "0.1.1a"
 
 # -- General configuration ---------------------------------------------------
@@ -21,8 +22,17 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",  # for Google/NumPy-style docstrings
     "sphinx.ext.viewcode",
-    "myst_parser",
+    "sphinx.ext.autosummary",
 ]
+
+autosummary_generate = True
+
+autodoc_default_options = {
+    "members": True,
+    "show-inheritance": True,
+    "inherited-members": True,
+    "no-special-members": True,
+}
 
 source_suffix = {
     ".rst": "restructuredtext",
@@ -34,7 +44,7 @@ templates_path = ["_templates"]
 
 # -- Options for HTML output -------------------------------------------------
 
-html_theme = "alabaster"  # Or 'sphinx_rtd_theme', 'alabaster', etc.
+html_theme = "furo"
 html_context = {
     "display_github": True,
     "github_user": "odysa",
