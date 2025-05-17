@@ -6,7 +6,6 @@ from .model import (
     Object,
     Predicate,
     RDF4JDataSet,
-    RDF4JRepository,
     RDFStatement,
     Subject,
 )
