@@ -52,10 +52,11 @@ async def mem_repo(rdf4j_service: str, random_mem_repo_config: RepositoryConfig)
 def random_mem_repo_config() -> RepositoryConfig:
     """Fixture that yields a random memory repository configuration."""
     repo_id = f"test_repo_{str(randint(1, 1000000))}"
+    title = f"test_repo_{str(randint(1, 1000000))}_title"
     return (
         RepositoryConfig.Builder()
         .repo_id(repo_id)
-        .title(repo_id)
+        .title(title)
         .sail_repository_impl(
             MemoryStoreConfig.Builder().persist(False).build(),
         )

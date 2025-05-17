@@ -3,9 +3,7 @@ import asyncio
 from rdflib import Literal
 
 from rdf4j_python import AsyncRdf4j
-from rdf4j_python.model import RepositoryConfig
-from rdf4j_python.model._repository_config import MemoryStoreConfig
-from rdf4j_python.model._term import IRI
+from rdf4j_python.model import IRI, MemoryStoreConfig, RepositoryConfig
 
 
 async def main():
