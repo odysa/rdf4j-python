@@ -1,7 +1,7 @@
 [project]
 name = "rdf4j-python"
 authors = [{ name = "Chengxu Bian", email = "cbian564@gmail.com" }]
-version = "0.1.2"
+version = "0.1.3"
 description = "The Python client for RDF4J"
 readme = "README.md"
 requires-python = ">=3.10"
