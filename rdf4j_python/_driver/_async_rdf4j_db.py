@@ -1,5 +1,5 @@
 import httpx
-import rdflib
+import pyoxigraph as og
 
 from rdf4j_python._client import AsyncApiClient
 from rdf4j_python.exception.repo_exception import (
@@ -66,12 +66,12 @@ class AsyncRdf4j:
             "/repositories",
             headers={"Accept": Rdf4jContentType.SPARQL_RESULTS_JSON},
         )
-        result = rdflib.query.Result.parse(
-            response, format=Rdf4jContentType.SPARQL_RESULTS_JSON
+        query_solutions = og.parse_query_results(
+            response.text, format=og.QueryResultsFormat.JSON
         )
         return [
-            RepositoryMetadata.from_rdflib_binding(binding)
-            for binding in result.bindings
+            RepositoryMetadata.from_sparql_query_solution(query_solution)
+            for query_solution in query_solutions
         ]
 
     async def get_repository(self, repository_id: str) -> AsyncRdf4JRepository:

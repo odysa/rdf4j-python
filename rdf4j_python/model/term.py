@@ -1,14 +1,20 @@
-from typing import Optional, Tuple, TypeAlias
+from typing import TypeAlias
 
-from rdflib import URIRef as _URIRef
-from rdflib.term import IdentifiedNode, Node
+import pyoxigraph as og
 
-IRI: TypeAlias = _URIRef
+IRI: TypeAlias = og.NamedNode
+BlankNode: TypeAlias = og.BlankNode
+Literal: TypeAlias = og.Literal
+DefaultGraph: TypeAlias = og.DefaultGraph
+Variable: TypeAlias = og.Variable
+
+Quad: TypeAlias = og.Quad
+Triple: TypeAlias = og.Triple
+
+Subject: TypeAlias = IRI | BlankNode | Triple
+Predicate: TypeAlias = IRI
+Object: TypeAlias = IRI | BlankNode | Literal
+Context: TypeAlias = IRI | BlankNode | DefaultGraph | None
 
 
-Subject: TypeAlias = Node
-Predicate: TypeAlias = Node
-Object: TypeAlias = Node
-Context: TypeAlias = Optional[IdentifiedNode]
-
-RDFStatement: TypeAlias = Tuple[Subject, Predicate, Object, Context]
+QuadResultSet: TypeAlias = og.QuadParser

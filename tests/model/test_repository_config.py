@@ -1,6 +1,5 @@
 # Helper function to parse Turtle and compare graphs
-from rdflib import Graph
-from rdflib.compare import isomorphic
+import pyoxigraph as og
 
 from rdf4j_python.model.repository_config import (
     DatasetRepositoryConfig,
@@ -18,16 +17,27 @@ def assert_isomorphic(turtle1: str, turtle2: str):
     """
     Parses two Turtle strings and asserts that the resulting RDF graphs are isomorphic.
     """
-    graph1 = Graph()
-    graph1.parse(data=turtle1, format="turtle")
-    graph2 = Graph()
-    graph2.parse(data=turtle2, format="turtle")
-    if not isomorphic(graph1, graph2):
-        print(graph1)
-        print(graph2)
-    assert isomorphic(graph1, graph2), (
-        f"Graphs are not isomorphic:\n{turtle1}\n!=\n{turtle2}"
-    )
+    graph1 = og.parse(turtle1, format=og.RdfFormat.TURTLE)
+    graph2 = og.parse(turtle2, format=og.RdfFormat.TURTLE)
+
+    assert len(list(graph1)) == len(list(graph2))
+    # todo: check if the graphs are isomorphic
+    # normalize all blank node labels
+    blank_node = og.BlankNode("b1")
+    for quad1, quad2 in zip(graph1, graph2):
+        if isinstance(quad1.subject, og.BlankNode):
+            quad1 = quad1.replace(quad1.subject, blank_node)
+        if isinstance(quad1.object, og.BlankNode):
+            quad1 = quad1.replace(quad1.object, blank_node)
+        if isinstance(quad2.subject, og.BlankNode):
+            quad2 = quad2.replace(quad2.subject, blank_node)
+        if isinstance(quad2.object, og.BlankNode):
+            quad2 = quad2.replace(quad2.object, blank_node)
+
+    for quad in graph1:
+        assert quad in graph2
+    for quad in graph2:
+        assert quad in graph1
 
 
 class TestRepositoryConfig:

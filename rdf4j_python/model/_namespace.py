@@ -1,11 +1,32 @@
-from typing import Mapping
-
-from rdflib.namespace import Namespace as RdflibNamespace
-from rdflib.term import Identifier, Variable
+import pyoxigraph as og
 
 from rdf4j_python.model.term import IRI
 
-from ._base_model import _BaseModel
+
+class _Namespace(str):
+    def __new__(cls, value: str | bytes) -> "Namespace":
+        try:
+            rt = str.__new__(cls, value)
+        except UnicodeDecodeError:
+            rt = str.__new__(cls, value, "utf-8")
+        return rt
+
+    def term(self, name: str) -> IRI:
+        return IRI(self + (name if isinstance(name, str) else ""))
+
+    def __getitem__(self, key: str) -> IRI:
+        return self.term(key)
+
+    def __getattr__(self, name: str) -> IRI:
+        if name.startswith("__"):
+            raise AttributeError
+        return self.term(name)
+
+    def __repr__(self) -> str:
+        return f"Namespace({super().__repr__()})"
+
+    def __contains__(self, ref: str) -> bool:
+        return ref.startswith(self)
 
 
 class Namespace:
@@ -14,7 +35,7 @@ class Namespace:
     """
 
     _prefix: str
-    _namespace: RdflibNamespace
+    _namespace: _Namespace
 
     def __init__(self, prefix: str, namespace: str):
         """
@@ -25,24 +46,26 @@ class Namespace:
             namespace (str): The namespace URI.
         """
         self._prefix = prefix
-        self._namespace = RdflibNamespace(namespace)
+        self._namespace = _Namespace(namespace)
 
     @classmethod
-    def from_rdflib_binding(cls, binding: Mapping[Variable, Identifier]) -> "Namespace":
+    def from_sparql_query_solution(
+        cls, query_solution: og.QuerySolution
+    ) -> "Namespace":
         """
-        Creates a Namespace from a RDFlib binding.
+        Creates a Namespace from a  binding.
 
         Args:
-            binding (Mapping[Variable, Identifier]): The RDFlib binding.
+            binding (Mapping[Variable, Identifier]): The  binding.
 
         Returns:
             Namespace: The created Namespace.
         """
-        prefix = _BaseModel.get_literal(binding, "prefix", "")
-        namespace = _BaseModel.get_literal(binding, "namespace", "")
+        prefix: og.Literal = query_solution[og.Variable("prefix")]
+        namespace: og.NamedNode = query_solution[og.Variable("namespace")]
         return cls(
-            prefix=prefix,
-            namespace=namespace,
+            prefix=prefix.value,
+            namespace=namespace.value,
         )
 
     def __str__(self):
@@ -85,7 +108,7 @@ class Namespace:
         Returns:
             IRI: The IRI for the term.
         """
-        return IRI(self._namespace.term(name))
+        return self._namespace.term(name)
 
     def __getitem__(self, item: str) -> IRI:
         """

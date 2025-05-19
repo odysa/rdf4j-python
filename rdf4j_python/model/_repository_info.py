@@ -1,13 +1,10 @@
 from dataclasses import dataclass
-from typing import Mapping
 
-from rdflib.term import Identifier, Variable
-
-from ._base_model import _BaseModel
+import pyoxigraph as og
 
 
 @dataclass
-class RepositoryMetadata(_BaseModel):
+class RepositoryMetadata:
     """
     Represents a repository metadata RDF4J.
     """
@@ -28,25 +25,38 @@ class RepositoryMetadata(_BaseModel):
         return f"Repository(id={self.id}, title={self.title}, uri={self.uri})"
 
     @classmethod
-    def from_rdflib_binding(
-        cls, result: Mapping[Variable, Identifier]
+    def from_sparql_query_solution(
+        cls, query_solution: og.QuerySolution
     ) -> "RepositoryMetadata":
         """
-        Create a Repository instance from a SPARQL query result
-        represented as a Mapping from rdflib Variables to Identifiers.
+        Create a RepositoryMetadata instance from a SPARQL query result.
 
         Args:
-            result (Mapping[Variable, Identifier]): The SPARQL query result.
+            query_solution (og.QuerySolution): The SPARQL query result.
 
         Returns:
             RepositoryMetadata: The RepositoryMetadata instance.
+
+        Raises:
+            ValueError: If the query solution is missing required fields.
         """
 
         # Construct and return the Repository object
+        if query_solution["id"] is None:
+            raise ValueError("id is required")
+        if query_solution["uri"] is None:
+            raise ValueError("uri is required")
+        if query_solution["title"] is None:
+            raise ValueError("title is required")
+        if query_solution["readable"] is None:
+            raise ValueError("readable is required")
+        if query_solution["writable"] is None:
+            raise ValueError("writable is required")
+
         return cls(
-            id=_BaseModel.get_literal(result, "id", ""),
-            uri=_BaseModel.get_uri(result, "uri", ""),
-            title=_BaseModel.get_literal(result, "title", ""),
-            readable=_BaseModel.get_literal(result, "readable", False),
-            writable=_BaseModel.get_literal(result, "writable", False),
+            id=query_solution["id"].value,
+            uri=query_solution["uri"].value,
+            title=query_solution["title"].value,
+            readable=bool(query_solution["readable"].value),
+            writable=bool(query_solution["writable"].value),
         )
