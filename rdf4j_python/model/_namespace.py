@@ -1,11 +1,7 @@
-from typing import Mapping
-
+import pyoxigraph as og
 from rdflib.namespace import Namespace as RdflibNamespace
-from rdflib.term import Identifier, Variable
 
 from rdf4j_python.model.term import IRI
-
-from ._base_model import _BaseModel
 
 
 class Namespace:
@@ -28,7 +24,9 @@ class Namespace:
         self._namespace = RdflibNamespace(namespace)
 
     @classmethod
-    def from_rdflib_binding(cls, binding: Mapping[Variable, Identifier]) -> "Namespace":
+    def from_sparql_query_solution(
+        cls, query_solution: og.QuerySolution
+    ) -> "Namespace":
         """
         Creates a Namespace from a RDFlib binding.
 
@@ -38,11 +36,11 @@ class Namespace:
         Returns:
             Namespace: The created Namespace.
         """
-        prefix = _BaseModel.get_literal(binding, "prefix", "")
-        namespace = _BaseModel.get_literal(binding, "namespace", "")
+        prefix: og.Literal = query_solution[og.Variable("prefix")]
+        namespace: og.NamedNode = query_solution[og.Variable("namespace")]
         return cls(
-            prefix=prefix,
-            namespace=namespace,
+            prefix=prefix.value,
+            namespace=namespace.value,
         )
 
     def __str__(self):

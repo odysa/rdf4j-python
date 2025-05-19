@@ -1,8 +1,9 @@
+import pyoxigraph as og
 import pytest
-from rdflib import Literal, Variable
 
 from rdf4j_python.model import Namespace
 from rdf4j_python.model.term import IRI
+from tests.conftest import SparqlJsonResultBuilder
 
 
 def test_namespace():
@@ -13,7 +14,7 @@ def test_namespace():
 def test_namespace_contains():
     namespace = Namespace("ex", "http://example.org/")
 
-    assert "foo" in namespace.term("foo")
+    assert "foo" in namespace.term("foo").value
     assert "bar" not in namespace
 
 
@@ -53,11 +54,21 @@ def test_namespace_getattr_error():
         namespace.__foo
 
 
-def test_namespace_from_rdflib_binding():
-    binding = {
-        Variable("prefix"): Literal("ex"),
-        Variable("namespace"): Literal("http://example.org/"),
-    }
-    namespace = Namespace.from_rdflib_binding(binding)
+def test_namespace_from_sparql_query_solution():
+    query_solution = og.parse_query_results(
+        SparqlJsonResultBuilder()
+        .add_variables(["prefix", "namespace"])
+        .add_bindings(
+            [
+                {
+                    "prefix": {"type": "literal", "value": "ex"},
+                    "namespace": {"type": "literal", "value": "http://example.org/"},
+                }
+            ]
+        )
+        .to_json(),
+        format=og.QueryResultsFormat.JSON,
+    )
+    namespace = Namespace.from_sparql_query_solution(next(query_solution))
     assert namespace.prefix == "ex"
-    assert namespace.namespace == IRI("http://example.org/")
+    assert namespace.namespace.value == "http://example.org/"

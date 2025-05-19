@@ -1,8 +1,9 @@
 from typing import Iterable
 
+import pyoxigraph as og
+
 from rdf4j_python._client import AsyncApiClient
-from rdf4j_python.model import RDF4JDataSet
-from rdf4j_python.model.term import IRI, RDFStatement
+from rdf4j_python.model.term import IRI, Quad, QuadResultSet, Triple
 from rdf4j_python.utils.const import Rdf4jContentType
 from rdf4j_python.utils.helpers import serialize_statements
 
@@ -22,11 +23,11 @@ class AsyncNamedGraph:
         self._repository_id = repository_id
         self._graph_uri = graph_uri
 
-    async def get(self) -> RDF4JDataSet:
+    async def get(self) -> QuadResultSet:
         """Fetches all RDF statements from this named graph.
 
         Returns:
-            str: RDF data serialized in the requested format.
+            QuadResultSet: RDF data serialized in the requested format.
 
         Raises:
             httpx.HTTPStatusError: If the request fails.
@@ -35,13 +36,13 @@ class AsyncNamedGraph:
         headers = {"Accept": Rdf4jContentType.NQUADS}
         response = await self._client.get(path, headers=headers)
         response.raise_for_status()
-        return RDF4JDataSet.from_raw_text(response.text)
+        return og.parse(response.content, format=og.RdfFormat.N_QUADS)
 
-    async def add(self, statements: Iterable[RDFStatement]):
+    async def add(self, statements: Iterable[Quad] | Iterable[Triple]):
         """Adds RDF statements to this named graph.
 
         Args:
-            statements (Iterable[RDFStatement]): RDF statements to add.
+            statements (Iterable[Quad] | Iterable[Triple]): RDF statements to add.
 
         Raises:
             httpx.HTTPStatusError: If the request fails.

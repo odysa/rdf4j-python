@@ -1,10 +1,7 @@
 from typing import Iterable, Optional
 
 import httpx
-import rdflib
-import rdflib.resource
-import rdflib.serializer
-import rdflib.store
+import pyoxigraph as og
 
 from rdf4j_python._client import AsyncApiClient
 from rdf4j_python._driver._async_named_graph import AsyncNamedGraph
@@ -14,13 +11,16 @@ from rdf4j_python.exception.repo_exception import (
     RepositoryNotFoundException,
     RepositoryUpdateException,
 )
-from rdf4j_python.model import Namespace, RDF4JDataSet
+from rdf4j_python.model import Namespace
 from rdf4j_python.model.term import (
+    IRI,
     Context,
     Object,
     Predicate,
-    RDFStatement,
+    Quad,
+    QuadResultSet,
     Subject,
+    Triple,
 )
 from rdf4j_python.utils.const import Rdf4jContentType
 from rdf4j_python.utils.helpers import serialize_statements
@@ -57,7 +57,7 @@ class AsyncRdf4JRepository:
         """
         path = f"/repositories/{self._repository_id}"
         params = {"query": sparql_query, "infer": str(infer).lower()}
-        headers = {"Accept": accept.value}
+        headers = {"Accept": accept}
         response = await self._client.get(path, params=params, headers=headers)
         self._handle_repo_not_found_exception(response)
         if "json" in response.headers.get("Content-Type", ""):
@@ -92,26 +92,32 @@ class AsyncRdf4JRepository:
         path = f"/repositories/{self._repository_id}/namespaces"
         headers = {"Accept": Rdf4jContentType.SPARQL_RESULTS_JSON}
         response = await self._client.get(path, headers=headers)
-        result = rdflib.query.Result.parse(
-            response, format=Rdf4jContentType.SPARQL_RESULTS_JSON
-        )
         self._handle_repo_not_found_exception(response)
-        return [Namespace.from_rdflib_binding(binding) for binding in result.bindings]
 
-    async def set_namespace(self, prefix: str, namespace: str):
+        query_solutions = og.parse_query_results(
+            response.text, format=og.QueryResultsFormat.JSON
+        )
+        return [
+            Namespace.from_sparql_query_solution(query_solution)
+            for query_solution in query_solutions
+        ]
+
+    async def set_namespace(self, prefix: str, namespace: IRI):
         """Sets a namespace prefix.
 
         Args:
             prefix (str): The namespace prefix.
-            namespace (str): The namespace URI.
+            namespace (IRI): The namespace URI.
 
         Raises:
             RepositoryNotFoundException: If the repository doesn't exist.
             NamespaceException: If the request fails.
         """
         path = f"/repositories/{self._repository_id}/namespaces/{prefix}"
-        headers = {"Content-Type": Rdf4jContentType.NTRIPLES.value}
-        response = await self._client.put(path, content=namespace, headers=headers)
+        headers = {"Content-Type": Rdf4jContentType.NTRIPLES}
+        response = await self._client.put(
+            path, content=namespace.value, headers=headers
+        )
         self._handle_repo_not_found_exception(response)
         if response.status_code != httpx.codes.NO_CONTENT:
             raise NamespaceException(f"Failed to set namespace: {response.text}")
@@ -130,7 +136,7 @@ class AsyncRdf4JRepository:
             NamespaceException: If retrieval fails.
         """
         path = f"/repositories/{self._repository_id}/namespaces/{prefix}"
-        headers = {"Accept": Rdf4jContentType.NTRIPLES.value}
+        headers = {"Accept": Rdf4jContentType.NTRIPLES}
         response = await self._client.get(path, headers=headers)
         self._handle_repo_not_found_exception(response)
 
@@ -192,7 +198,7 @@ class AsyncRdf4JRepository:
         object_: Optional[Object] = None,
         contexts: Optional[list[Context]] = None,
         infer: bool = True,
-    ) -> RDF4JDataSet:
+    ) -> QuadResultSet:
         """Retrieves statements matching the given pattern.
 
         Args:
@@ -202,7 +208,7 @@ class AsyncRdf4JRepository:
             contexts (Optional[list[Context]]): Filter by context (named graph).
 
         Returns:
-            DataSet: Dataset of matching RDF statements.
+            QuadResultSet: QuadResultSet of matching RDF statements.
 
         Raises:
             RepositoryNotFoundException: If the repository doesn't exist.
@@ -211,20 +217,18 @@ class AsyncRdf4JRepository:
         params = {}
 
         if subject:
-            params["subj"] = subject.n3()
+            params["subj"] = str(subject)
         if predicate:
-            params["pred"] = predicate.n3()
+            params["pred"] = str(predicate)
         if object_:
-            params["obj"] = object_.n3()
+            params["obj"] = str(object_)
         if contexts:
-            params["context"] = [ctx.n3() for ctx in contexts]
+            params["context"] = [str(ctx) for ctx in contexts]
         params["infer"] = str(infer).lower()
 
         headers = {"Accept": Rdf4jContentType.NQUADS}
         response = await self._client.get(path, params=params, headers=headers)
-        dataset = RDF4JDataSet()
-        dataset.parse(data=response.text, format="nquads")
-        return dataset
+        return og.parse(response.content, format=og.RdfFormat.N_QUADS)
 
     async def delete_statements(
         self,
@@ -250,13 +254,13 @@ class AsyncRdf4JRepository:
         params = {}
 
         if subject:
-            params["subj"] = subject.n3()
+            params["subj"] = str(subject)
         if predicate:
-            params["pred"] = predicate.n3()
+            params["pred"] = str(predicate)
         if object_:
-            params["obj"] = object_.n3()
+            params["obj"] = str(object_)
         if contexts:
-            params["context"] = [ctx.n3() for ctx in contexts]
+            params["context"] = [str(ctx) for ctx in contexts]
 
         response = await self._client.delete(path, params=params)
         self._handle_repo_not_found_exception(response)
@@ -286,21 +290,26 @@ class AsyncRdf4JRepository:
             httpx.HTTPStatusError: If addition fails.
         """
         path = f"/repositories/{self._repository_id}/statements"
+        statement: Triple | Quad
+        if context is None:
+            statement = Triple(subject, predicate, object)
+        else:
+            statement = Quad(subject, predicate, object, context)
+
         response = await self._client.post(
             path,
-            content=serialize_statements([(subject, predicate, object, context)]),
+            content=serialize_statements([statement]),
             headers={"Content-Type": Rdf4jContentType.NQUADS},
         )
         self._handle_repo_not_found_exception(response)
         if response.status_code != httpx.codes.NO_CONTENT:
             raise RepositoryUpdateException(f"Failed to add statement: {response.text}")
 
-    async def add_statements(self, statements: Iterable[RDFStatement]):
+    async def add_statements(self, statements: Iterable[Quad] | Iterable[Triple]):
         """Adds a list of RDF statements to the repository.
 
         Args:
-            statements (Iterable[RDFStatement]): A list of RDF statements.
-            RDFStatement: A tuple of subject, predicate, object, and context.
+            statements (Iterable[Quad] | Iterable[Triple]): A list of RDF statements.
 
         Raises:
             RepositoryNotFoundException: If the repository doesn't exist.
@@ -320,26 +329,26 @@ class AsyncRdf4JRepository:
 
     async def replace_statements(
         self,
-        statements: Iterable[RDFStatement],
-        contexts: Optional[list[Context]] = None,
+        statements: Iterable[Quad] | Iterable[Triple],
+        contexts: Optional[Iterable[Context]] = None,
         base_uri: Optional[str] = None,
     ):
         """Replaces all repository statements with the given RDF data.
 
         Args:
-            statements (Iterable[RDFStatement]): RDF statements to load.
-            contexts (Optional[list[Context]]): One or more specific contexts to restrict deletion to.
+            statements (Iterable[Quad] | Iterable[Triple]): RDF statements to load.
+            contexts (Optional[Iterable[Context]]): One or more specific contexts to restrict deletion to.
 
         Raises:
             RepositoryNotFoundException: If the repository doesn't exist.
             httpx.HTTPStatusError: If the operation fails.
         """
         path = f"/repositories/{self._repository_id}/statements"
-        headers = {"Content-Type": Rdf4jContentType.NQUADS.value}
+        headers = {"Content-Type": Rdf4jContentType.NQUADS}
 
         params = {}
         if contexts:
-            params["context"] = [ctx.n3() for ctx in contexts]
+            params["context"] = [str(ctx) for ctx in contexts]
         if base_uri:
             params["baseUri"] = base_uri
 

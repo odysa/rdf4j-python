@@ -1,7 +1,10 @@
+import json
 import logging
 from random import randint
+from typing import Any, Iterable
 
 import httpx
+import pyoxigraph as og
 import pytest
 import pytest_asyncio
 
@@ -62,3 +65,96 @@ def random_mem_repo_config() -> RepositoryConfig:
         )
         .build()
     )
+
+
+@pytest.fixture
+def valid_repo_list_result() -> og.QuerySolutions:
+    return og.parse_query_results(
+        SparqlJsonResultBuilder()
+        .add_variables(["id", "title", "uri", "readable", "writable"])
+        .add_bindings(
+            [
+                {
+                    "id": {"type": "literal", "value": "example-repo1"},
+                    "title": {"type": "literal", "value": "example-repo1"},
+                    "uri": {
+                        "type": "uri",
+                        "value": "http://localhost:8080/rdf4j-server/repositories/example-repo1",
+                    },
+                    "readable": {"type": "literal", "value": "true"},
+                    "writable": {"type": "literal", "value": "false"},
+                },
+                {
+                    "id": {"type": "literal", "value": "example-repo2"},
+                    "title": {"type": "literal", "value": "example-repo2"},
+                    "uri": {
+                        "type": "uri",
+                        "value": "http://localhost:8080/rdf4j-server/repositories/example-repo2",
+                    },
+                    "readable": {"type": "literal", "value": "true"},
+                    "writable": {"type": "literal", "value": "false"},
+                },
+            ]
+        )
+        .to_json(),
+        format=og.QueryResultsFormat.JSON,
+    )
+
+
+@pytest.fixture
+def partial_result():
+    return og.parse_query_results(
+        SparqlJsonResultBuilder()
+        .add_variables(["id", "title"])
+        .add_bindings([{"id": {"type": "literal", "value": "partial-repo"}}])
+        .to_json(),
+        format=og.QueryResultsFormat.JSON,
+    )
+
+
+class SparqlJsonResultBuilder:
+    def __init__(self):
+        self._variables = []
+        self._bindings = []
+
+    def add_variable(self, name: str):
+        if name not in self._variables:
+            self._variables.append(name)
+        return self
+
+    def add_variables(self, names: Iterable[str]):
+        for name in names:
+            self.add_variable(name)
+        return self
+
+    def add_bindings(self, bindings: list[dict[str, Any]]):
+        """
+        Add one binding (a result row). The value must be a SPARQL result-compliant dict:
+        Example:
+            {
+                "uri": {
+                    "type": "uri",
+                    "value": "http://localhost:8080/rdf4j-server/repositories/mem-rdf"
+                },
+                "id": {
+                  "type": "literal",
+                  "value": "mem-rdf"
+                },
+                "writable": {
+                  "type": "literal",
+                  "datatype": "http://www.w3.org/2001/XMLSchema#boolean",
+                  "value": "false"
+                }
+            }
+        """
+        self._bindings.extend(bindings)
+        return self
+
+    def _build(self) -> dict:
+        return {
+            "head": {"vars": self._variables},
+            "results": {"bindings": self._bindings},
+        }
+
+    def to_json(self, **kwargs) -> str:
+        return json.dumps(self._build(), **kwargs)
