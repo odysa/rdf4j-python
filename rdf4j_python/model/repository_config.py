@@ -1,10 +1,15 @@
 from typing import Any, Dict, Optional
 
-from rdflib import BNode, Graph, Literal, Namespace, URIRef
-from rdflib.namespace import RDF, RDFS, XSD
+from pyoxigraph import Dataset, Quad, RdfFormat, serialize
+
+from rdf4j_python.model import Namespace
+from rdf4j_python.model.term import IRI as URIRef
+from rdf4j_python.model.term import BlankNode as BNode
+from rdf4j_python.model.term import Literal
+from rdf4j_python.model.vocabulary import RDF, RDFS, XSD
 
 # Define the RDF4J configuration namespace
-CONFIG = Namespace("tag:rdf4j.org,2023:config/")
+CONFIG = Namespace("config", "tag:rdf4j.org,2023:config/")
 
 
 class RepositoryConfig:
@@ -56,7 +61,7 @@ class RepositoryConfig:
 
     def to_turtle(self) -> str:
         """
-        Serializes the Repository configuration to Turtle syntax using RDFlib.
+        Serializes the Repository configuration to Turtle syntax using .
 
         Returns:
             str: A UTF-8 encoded Turtle string representing the RDF4J repository configuration.
@@ -66,23 +71,20 @@ class RepositoryConfig:
         Raises:
             ValueError: If any of the configuration values are of unsupported types during serialization.
         """
-        graph = Graph()
-        graph.bind("rdfs", RDFS)
-        graph.bind("config", CONFIG)
-        graph.bind("xsd", XSD)
+        graph = Dataset()
         repo_node = BNode()
-        graph.add((repo_node, RDF["type"], CONFIG["Repository"]))
+        graph.add(Quad(repo_node, RDF["type"], CONFIG["Repository"], None))
 
-        graph.add((repo_node, CONFIG["rep.id"], Literal(self._repo_id)))
+        graph.add(Quad(repo_node, CONFIG["rep.id"], Literal(self._repo_id), None))
 
         if self._title:
-            graph.add((repo_node, RDFS["label"], Literal(self._title)))
+            graph.add(Quad(repo_node, RDFS["label"], Literal(self._title), None))
 
         if self._impl:
             impl_node = self._impl.add_to_graph(graph)
-            graph.add((repo_node, CONFIG["rep.impl"], impl_node))
+            graph.add(Quad(repo_node, CONFIG["rep.impl"], impl_node, None))
 
-        return graph.serialize(format="turtle").encode("utf-8")
+        return serialize(graph, format=RdfFormat.TURTLE)
 
     class Builder:
         """
@@ -168,14 +170,14 @@ class RepositoryConfig:
 
 class RepositoryImplConfig:
     """
-    Base class for repository implementation configurations using RDFlib.
+    Base class for repository implementation configurations using .
     """
 
     def __init__(self, rep_type: str):
         self.rep_type = rep_type
         self.config_params: Dict[str, Any] = {}
 
-    def add_to_graph(self, graph: Graph) -> URIRef:
+    def add_to_graph(self, graph: Dataset) -> URIRef:
         """
         Adds the repository implementation configuration to the RDF graph.
 
@@ -183,28 +185,45 @@ class RepositoryImplConfig:
             The RDF node representing this configuration.
         """
         sail_node = BNode()
-        graph.add((sail_node, CONFIG["rep.type"], Literal(self.rep_type)))
+        graph.add(Quad(sail_node, CONFIG["rep.type"], Literal(self.rep_type), None))
         for key, value in self.config_params.items():
             if isinstance(value, str):
-                graph.add((sail_node, CONFIG[key], Literal(value)))
-            elif isinstance(value, int):
+                graph.add(Quad(sail_node, CONFIG[key], Literal(value), None))
+            elif isinstance(value, int) and not isinstance(value, bool):
                 graph.add(
-                    (sail_node, CONFIG[key], Literal(value, datatype=XSD.integer))
+                    Quad(
+                        sail_node,
+                        CONFIG[key],
+                        Literal(value, datatype=XSD["integer"]),
+                        None,
+                    )
                 )
             elif isinstance(value, float):
-                graph.add((sail_node, CONFIG[key], Literal(value, datatype=XSD.double)))
+                graph.add(
+                    Quad(
+                        sail_node,
+                        CONFIG[key],
+                        Literal(value, datatype=XSD["double"]),
+                        None,
+                    )
+                )
             elif isinstance(value, bool):
                 graph.add(
-                    (sail_node, CONFIG[key], Literal(value, datatype=XSD.boolean))
+                    Quad(
+                        sail_node,
+                        CONFIG[key],
+                        Literal(str(value).lower(), datatype=XSD["boolean"]),
+                        None,
+                    )
                 )
             elif isinstance(value, list):
                 for item in value:
-                    graph.add((sail_node, CONFIG[key], URIRef(item)))  # Assuming IRIs
+                    graph.add(Quad(sail_node, CONFIG[key], URIRef(item), None))
             elif isinstance(value, RepositoryImplConfig) or isinstance(
                 value, SailConfig
             ):
                 nested_node = value.add_to_graph(graph)
-                graph.add((sail_node, CONFIG[key], nested_node))
+                graph.add(Quad(sail_node, CONFIG[key], nested_node, None))
             else:
                 raise ValueError(f"Unsupported configuration value type: {type(value)}")
         return sail_node
@@ -212,7 +231,7 @@ class RepositoryImplConfig:
 
 class SPARQLRepositoryConfig(RepositoryImplConfig):
     """
-    Configuration for a SPARQLRepository using RDFlib.
+    Configuration for a SPARQLRepository.
     """
 
     TYPE = "openrdf:SPARQLRepository"
@@ -265,7 +284,7 @@ class SPARQLRepositoryConfig(RepositoryImplConfig):
 
 class HTTPRepositoryConfig(RepositoryImplConfig):
     """
-    Configuration for an HTTPRepository using RDFlib.
+    Configuration for an HTTPRepository.
     """
 
     TYPE = "openrdf:HTTPRepository"
@@ -320,7 +339,7 @@ class HTTPRepositoryConfig(RepositoryImplConfig):
 
 class SailRepositoryConfig(RepositoryImplConfig):
     """
-    Configuration for a SailRepository using RDFlib.
+    Configuration for a SailRepository.
     """
 
     TYPE = "openrdf:SailRepository"
@@ -329,7 +348,7 @@ class SailRepositoryConfig(RepositoryImplConfig):
         super().__init__(rep_type=SailRepositoryConfig.TYPE)
         self.config_params["sail.impl"] = sail_impl
 
-    def add_to_graph(self, graph: Graph) -> URIRef:
+    def add_to_graph(self, graph: Dataset) -> URIRef:
         """
         Adds the SailRepository configuration to the RDF graph.
         """
@@ -364,7 +383,7 @@ class SailRepositoryConfig(RepositoryImplConfig):
 
 class DatasetRepositoryConfig(RepositoryImplConfig):
     """
-    Configuration for a DatasetRepository using RDFlib.
+    Configuration for a DatasetRepository using .
     """
 
     TYPE = "openrdf:DatasetRepository"
@@ -373,7 +392,7 @@ class DatasetRepositoryConfig(RepositoryImplConfig):
         super().__init__(rep_type=DatasetRepositoryConfig.TYPE)
         self.config_params["delegate"] = delegate
 
-    def add_to_graph(self, graph: Graph) -> URIRef:
+    def add_to_graph(self, graph: Dataset) -> URIRef:
         """
         Adds the DatasetRepository configuration to the RDF Graph
         """
@@ -390,7 +409,7 @@ class DatasetRepositoryConfig(RepositoryImplConfig):
 
 class SailConfig:
     """
-    Base class for SAIL configurations using RDFlib.
+    Base class for SAIL configurations using .
     """
 
     def __init__(
@@ -410,7 +429,7 @@ class SailConfig:
                 default_query_evaluation_mode
             )
 
-    def add_to_graph(self, graph: Graph) -> URIRef:
+    def add_to_graph(self, graph: Dataset) -> URIRef:
         """
         Adds the SAIL configuration to the RDF graph.
 
@@ -418,28 +437,45 @@ class SailConfig:
             The RDF node representing this configuration.
         """
         sail_node = BNode()
-        graph.add((sail_node, CONFIG["sail.type"], Literal(self.sail_type)))
+        graph.add(Quad(sail_node, CONFIG["sail.type"], Literal(self.sail_type), None))
         for key, value in self.config_params.items():
             if isinstance(value, str):
-                graph.add((sail_node, CONFIG[key], Literal(value)))
-            elif isinstance(value, int):
-                graph.add(
-                    (sail_node, CONFIG[key], Literal(value, datatype=XSD.integer))
-                )
-            elif isinstance(value, float):
-                graph.add((sail_node, CONFIG[key], Literal(value, datatype=XSD.double)))
+                graph.add(Quad(sail_node, CONFIG[key], Literal(value), None))
             elif isinstance(value, bool):
                 graph.add(
-                    (sail_node, CONFIG[key], Literal(value, datatype=XSD.boolean))
+                    Quad(
+                        sail_node,
+                        CONFIG[key],
+                        Literal(str(value).lower(), datatype=XSD["boolean"]),
+                        None,
+                    )
+                )
+            elif isinstance(value, int) and not isinstance(value, bool):
+                graph.add(
+                    Quad(
+                        sail_node,
+                        CONFIG[key],
+                        Literal(str(value), datatype=XSD["integer"]),
+                        None,
+                    )
+                )
+            elif isinstance(value, float):
+                graph.add(
+                    Quad(
+                        sail_node,
+                        CONFIG[key],
+                        Literal(str(value), datatype=XSD["double"]),
+                        None,
+                    )
                 )
             elif isinstance(value, list):
                 for item in value:
-                    graph.add((sail_node, CONFIG[key], URIRef(item)))
+                    graph.add(Quad(sail_node, CONFIG[key], URIRef(item), None))
             elif isinstance(value, SailConfig) or isinstance(
                 value, RepositoryImplConfig
             ):
                 nested_node = value.add_to_graph(graph)
-                graph.add((sail_node, CONFIG[key], nested_node))
+                graph.add(Quad(sail_node, CONFIG[key], nested_node, None))
             else:
                 raise ValueError(f"Unsupported configuration value type: {type(value)}")
         return sail_node
@@ -447,7 +483,7 @@ class SailConfig:
 
 class MemoryStoreConfig(SailConfig):
     """
-    Configuration for a MemoryStore using RDFlib.
+    Configuration for a MemoryStore using .
     """
 
     TYPE = "openrdf:MemoryStore"
@@ -543,7 +579,7 @@ class MemoryStoreConfig(SailConfig):
 
 class NativeStoreConfig(SailConfig):
     """
-    Configuration for a NativeStore using RDFlib.
+    Configuration for a NativeStore using .
     """
 
     TYPE = "openrdf:NativeStore"
@@ -711,7 +747,7 @@ class NativeStoreConfig(SailConfig):
 
 class ElasticsearchStoreConfig(SailConfig):
     """
-    Configuration for an ElasticsearchStore using RDFlib.
+    Configuration for an ElasticsearchStore using .
     """
 
     TYPE = "rdf4j:ElasticsearchStore"
@@ -835,7 +871,7 @@ class ElasticsearchStoreConfig(SailConfig):
 
 class SchemaCachingRDFSInferencerConfig(SailConfig):
     """
-    Configuration for the RDF Schema inferencer using RDFlib.
+    Configuration for the RDF Schema inferencer using .
     """
 
     TYPE = "rdf4j:SchemaCachingRDFSInferencer"
@@ -861,7 +897,7 @@ class SchemaCachingRDFSInferencerConfig(SailConfig):
         )
         self.config_params["delegate"] = delegate
 
-    def add_to_graph(self, graph: Graph) -> URIRef:
+    def add_to_graph(self, graph: Dataset) -> URIRef:
         """
         Adds the SchemaCachingRDFSInferencer configuration to the RDF graph.
 
@@ -928,7 +964,7 @@ class SchemaCachingRDFSInferencerConfig(SailConfig):
 
 class DirectTypeHierarchyInferencerConfig(SailConfig):
     """
-    Configuration for the Direct Type inferencer using RDFlib.
+    Configuration for the Direct Type inferencer using .
     """
 
     TYPE = "openrdf:DirectTypeHierarchyInferencer"
@@ -954,7 +990,7 @@ class DirectTypeHierarchyInferencerConfig(SailConfig):
         )
         self.config_params["delegate"] = delegate
 
-    def add_to_graph(self, graph: Graph) -> URIRef:
+    def add_to_graph(self, graph: Dataset) -> URIRef:
         """
         Adds the DirectTypeHierarchyInferencerConfig to the graph
 
@@ -1027,7 +1063,7 @@ class DirectTypeHierarchyInferencerConfig(SailConfig):
 
 class SHACLSailConfig(SailConfig):
     """
-    Configuration for the SHACL Sail using RDFlib.
+    Configuration for the SHACL Sail using .
     """
 
     TYPE = "rdf4j:ShaclSail"
@@ -1127,7 +1163,7 @@ class SHACLSailConfig(SailConfig):
                 validation_results_limit_per_constraint
             )
 
-    def add_to_graph(self, graph: Graph) -> URIRef:
+    def add_to_graph(self, graph: Dataset) -> URIRef:
         """
         Adds the SHACLSailConfig to the RDF graph.
 
@@ -1146,14 +1182,31 @@ class SHACLSailConfig(SailConfig):
             if key != "delegate":  # Delegate is already handled
                 if isinstance(value, bool):
                     graph.add(
-                        (sail_node, CONFIG[key], Literal(value, datatype=XSD.boolean))
+                        Quad(
+                            sail_node,
+                            CONFIG[key],
+                            Literal(str(value).lower(), datatype=XSD["boolean"]),
+                            None,
+                        )
                     )
-                elif isinstance(value, int):
+                elif isinstance(value, int) and not isinstance(value, bool):
                     graph.add(
-                        (sail_node, CONFIG[key], Literal(value, datatype=XSD.integer))
+                        Quad(
+                            sail_node,
+                            CONFIG[key],
+                            Literal(str(value), datatype=XSD["integer"]),
+                            None,
+                        )
                     )
                 else:
-                    graph.add((sail_node, CONFIG[key], Literal(value)))
+                    graph.add(
+                        Quad(
+                            sail_node,
+                            CONFIG[key],
+                            Literal(value),
+                            None,
+                        )
+                    )
         return sail_node
 
     class Builder:

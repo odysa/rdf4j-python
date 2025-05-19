@@ -2,11 +2,9 @@ from dataclasses import dataclass
 
 import pyoxigraph as og
 
-from ._base_model import _BaseModel
-
 
 @dataclass
-class RepositoryMetadata(_BaseModel):
+class RepositoryMetadata:
     """
     Represents a repository metadata RDF4J.
     """
