@@ -48,6 +48,7 @@ async with AsyncRdf4j("http://localhost:19780/rdf4j-server") as db:
         Literal("test_object"),
     )
     await repo.get_statements(subject=IRI("http://example.com/subject"))
+    results = await repo.query("SELECT * WHERE { ?s ?p ?o }")
 ```
 
 For more detailed examples, refer to the [examples](https://github.com/odysa/rdf4j-python/tree/main/examples) directory.
