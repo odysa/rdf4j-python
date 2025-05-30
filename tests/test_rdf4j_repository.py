@@ -4,10 +4,12 @@ from rdf4j_python import AsyncRdf4JRepository
 from rdf4j_python.exception.repo_exception import (
     NamespaceException,
     RepositoryNotFoundException,
+    RepositoryUpdateException,
 )
 from rdf4j_python.model.term import Literal, Quad, QuadResultSet, Triple
 from rdf4j_python.model.vocabulary import EXAMPLE as ex
 from rdf4j_python.model.vocabulary import RDF, RDFS
+from rdf4j_python.utils.const import Rdf4jContentType
 
 ex_ns = ex.namespace
 rdf_ns = RDF.namespace
@@ -348,3 +350,39 @@ async def test_repo_query_with_limit(mem_repo: AsyncRdf4JRepository):
     assert result_list[1]["s"] == ex["subject2"]
     assert result_list[1]["p"] == ex["predicate"]
     assert result_list[1]["o"] == Literal("test_object2")
+
+
+@pytest.mark.asyncio
+async def test_repo_update(mem_repo: AsyncRdf4JRepository):
+    await mem_repo.update(
+        'INSERT DATA { <http://example.org/subject1> <http://example.org/predicate> "test_object1" }',
+        Rdf4jContentType.SPARQL_UPDATE,
+    )
+    result = await mem_repo.query("SELECT * WHERE { ?s ?p ?o }")
+    result_list = list(result)
+    assert len(result_list) == 1
+    assert result_list[0]["s"] == ex["subject1"]
+    assert result_list[0]["p"] == ex["predicate"]
+    assert result_list[0]["o"] == Literal("test_object1")
+
+
+@pytest.mark.asyncio
+async def test_repo_update_not_found(rdf4j_service: str):
+    from rdf4j_python import AsyncRdf4j
+
+    async with AsyncRdf4j(rdf4j_service) as db:
+        repo = await db.get_repository("not_found")
+        with pytest.raises(RepositoryNotFoundException):
+            await repo.update(
+                "INSERT DATA { <http://example.org/subject1> <http://example.org/predicate> 'test_object1' }",
+                Rdf4jContentType.SPARQL_UPDATE,
+            )
+
+
+@pytest.mark.asyncio
+async def test_repo_update_invalid_query(mem_repo: AsyncRdf4JRepository):
+    with pytest.raises(RepositoryUpdateException):
+        await mem_repo.update(
+            "INSERT D <http://example.org/subject1> <http://example.org/predicate> 'test_object1' }",
+            Rdf4jContentType.SPARQL_UPDATE,
+        )

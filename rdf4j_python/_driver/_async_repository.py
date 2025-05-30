@@ -88,7 +88,9 @@ class AsyncRdf4JRepository:
         self._handle_repo_not_found_exception(response)
         return og.parse_query_results(response.text, format=og.QueryResultsFormat.JSON)
 
-    async def update(self, sparql_update: str):
+    async def update(
+        self, sparql_update_query: str, content_type: Rdf4jContentType
+    ) -> None:
         """Executes a SPARQL UPDATE command.
 
         Args:
@@ -100,10 +102,13 @@ class AsyncRdf4JRepository:
         """
         # TODO: handle update results
         path = f"/repositories/{self._repository_id}/statements"
-        headers = {"Content-Type": Rdf4jContentType.SPARQL_UPDATE}
-        response = await self._client.post(path, data=sparql_update, headers=headers)
+        headers = {"Content-Type": content_type}
+        response = await self._client.post(
+            path, content=sparql_update_query, headers=headers
+        )
         self._handle_repo_not_found_exception(response)
-        response.raise_for_status()
+        if response.status_code != httpx.codes.NO_CONTENT:
+            raise RepositoryUpdateException(f"Failed to update: {response.text}")
 
     async def get_namespaces(self):
         """Retrieves all namespaces in the repository.
