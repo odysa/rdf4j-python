@@ -59,12 +59,12 @@ class RepositoryConfig:
         """
         return self._title
 
-    def to_turtle(self) -> str:
+    def to_turtle(self) -> bytes | None:
         """
         Serializes the Repository configuration to Turtle syntax using .
 
         Returns:
-            str: A UTF-8 encoded Turtle string representing the RDF4J repository configuration.
+            bytes | None: A UTF-8 encoded Turtle string representing the RDF4J repository configuration.
                 The serialization includes the repository ID, optional human-readable title,
                 and nested repository implementation configuration if available.
 
@@ -909,7 +909,7 @@ class SchemaCachingRDFSInferencerConfig(SailConfig):
         """
         sail_node = super().add_to_graph(graph)
         delegate_node = self.config_params["delegate"].to_rdf(graph)
-        graph.add((sail_node, CONFIG.delegate, delegate_node))
+        graph.add(Quad(sail_node, CONFIG.delegate, delegate_node, None))
         return sail_node
 
     class Builder:
@@ -1002,7 +1002,7 @@ class DirectTypeHierarchyInferencerConfig(SailConfig):
         """
         sail_node = super().add_to_graph(graph)
         delegate_node = self.config_params["delegate"].to_rdf(graph)
-        graph.add((sail_node, CONFIG["delegate"], delegate_node))
+        graph.add(Quad(sail_node, CONFIG["delegate"], delegate_node, None))
         return sail_node
 
     class Builder:
@@ -1175,7 +1175,7 @@ class SHACLSailConfig(SailConfig):
         """
         sail_node = super().add_to_graph(graph)  # Get the basic node
         delegate_node = self.config_params["delegate"].to_rdf(graph)
-        graph.add((sail_node, CONFIG.delegate, delegate_node))
+        graph.add(Quad(sail_node, CONFIG.delegate, delegate_node, None))
 
         # Add SHACL-specific parameters
         for key, value in self.config_params.items():

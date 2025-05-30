@@ -1,7 +1,7 @@
 import json
 import logging
 from random import randint
-from typing import Any, Iterable
+from typing import Any, Iterable, cast
 
 import httpx
 import pyoxigraph as og
@@ -69,35 +69,38 @@ def random_mem_repo_config() -> RepositoryConfig:
 
 @pytest.fixture
 def valid_repo_list_result() -> og.QuerySolutions:
-    return og.parse_query_results(
-        SparqlJsonResultBuilder()
-        .add_variables(["id", "title", "uri", "readable", "writable"])
-        .add_bindings(
-            [
-                {
-                    "id": {"type": "literal", "value": "example-repo1"},
-                    "title": {"type": "literal", "value": "example-repo1"},
-                    "uri": {
-                        "type": "uri",
-                        "value": "http://localhost:8080/rdf4j-server/repositories/example-repo1",
+    return cast(
+        og.QuerySolutions,
+        og.parse_query_results(
+            SparqlJsonResultBuilder()
+            .add_variables(["id", "title", "uri", "readable", "writable"])
+            .add_bindings(
+                [
+                    {
+                        "id": {"type": "literal", "value": "example-repo1"},
+                        "title": {"type": "literal", "value": "example-repo1"},
+                        "uri": {
+                            "type": "uri",
+                            "value": "http://localhost:8080/rdf4j-server/repositories/example-repo1",
+                        },
+                        "readable": {"type": "literal", "value": "true"},
+                        "writable": {"type": "literal", "value": "false"},
                     },
-                    "readable": {"type": "literal", "value": "true"},
-                    "writable": {"type": "literal", "value": "false"},
-                },
-                {
-                    "id": {"type": "literal", "value": "example-repo2"},
-                    "title": {"type": "literal", "value": "example-repo2"},
-                    "uri": {
-                        "type": "uri",
-                        "value": "http://localhost:8080/rdf4j-server/repositories/example-repo2",
+                    {
+                        "id": {"type": "literal", "value": "example-repo2"},
+                        "title": {"type": "literal", "value": "example-repo2"},
+                        "uri": {
+                            "type": "uri",
+                            "value": "http://localhost:8080/rdf4j-server/repositories/example-repo2",
+                        },
+                        "readable": {"type": "literal", "value": "true"},
+                        "writable": {"type": "literal", "value": "false"},
                     },
-                    "readable": {"type": "literal", "value": "true"},
-                    "writable": {"type": "literal", "value": "false"},
-                },
-            ]
-        )
-        .to_json(),
-        format=og.QueryResultsFormat.JSON,
+                ]
+            )
+            .to_json(),
+            format=og.QueryResultsFormat.JSON,
+        ),
     )
 
 
