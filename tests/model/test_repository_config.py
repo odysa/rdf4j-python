@@ -13,7 +13,7 @@ from rdf4j_python.model.repository_config import (
 )
 
 
-def assert_isomorphic(turtle1: str, turtle2: str):
+def assert_isomorphic(turtle1: bytes | None, turtle2: bytes | None):
     """
     Parses two Turtle strings and asserts that the resulting RDF graphs are isomorphic.
     """
@@ -35,7 +35,7 @@ class TestRepositoryConfig:
             [] a config:Repository ;
                 config:rep.id "test_repo" .
         """
-        assert_isomorphic(config.to_turtle(), expected_turtle)
+        assert_isomorphic(config.to_turtle(), expected_turtle.encode())
 
     def test_full_config(self):
         memory_store_config = (
@@ -74,7 +74,7 @@ class TestRepositoryConfig:
                     ]
                 ] .
         """
-        assert_isomorphic(config.to_turtle(), expected_turtle)
+        assert_isomorphic(config.to_turtle(), expected_turtle.encode())
 
     def test_sparql_repo_config(self):
         sparql_config = (
@@ -100,7 +100,7 @@ class TestRepositoryConfig:
                     config:sparql.updateEndpoint "http://example.com/sparql/update"
                 ] .
         """
-        assert_isomorphic(repo_config.to_turtle(), expected_turtle)
+        assert_isomorphic(repo_config.to_turtle(), expected_turtle.encode())
 
     def test_http_repo_config(self):
         http_config = (
@@ -126,7 +126,7 @@ class TestRepositoryConfig:
                     config:http.password "pass2"
                 ] .
         """
-        assert_isomorphic(repo_config.to_turtle(), expected_turtle)
+        assert_isomorphic(repo_config.to_turtle(), expected_turtle.encode())
 
     def test_dataset_repo_config(self):
         memory_store_config = MemoryStoreConfig.Builder().persist(False).build()
@@ -160,7 +160,7 @@ class TestRepositoryConfig:
                     ]
                 ] .
         """
-        assert_isomorphic(repo_config.to_turtle(), expected_turtle)
+        assert_isomorphic(repo_config.to_turtle(), expected_turtle.encode())
 
     def test_native_store_config(self):
         native_config = (
@@ -202,7 +202,7 @@ class TestRepositoryConfig:
                     ]
                 ] .
         """
-        assert_isomorphic(repo_config.to_turtle(), expected_turtle)
+        assert_isomorphic(repo_config.to_turtle(), expected_turtle.encode())
 
     def test_elasticsearch_store_config(self):
         es_config = (
@@ -239,7 +239,7 @@ class TestRepositoryConfig:
                     ]
                 ] .
         """
-        assert_isomorphic(repo_config.to_turtle(), expected_turtle)
+        assert_isomorphic(repo_config.to_turtle(), expected_turtle.encode())
 
     def test_memory_store_config_defaults(self):
         config = (
@@ -274,4 +274,4 @@ class TestRepositoryConfig:
                     ]
                 ] .
         """
-        assert_isomorphic(config.to_turtle(), expected_turtle)
+        assert_isomorphic(config.to_turtle(), expected_turtle.encode())

@@ -69,6 +69,7 @@ class AsyncRdf4j:
         query_solutions = og.parse_query_results(
             response.text, format=og.QueryResultsFormat.JSON
         )
+        assert isinstance(query_solutions, og.QuerySolutions)
         return [
             RepositoryMetadata.from_sparql_query_solution(query_solution)
             for query_solution in query_solutions

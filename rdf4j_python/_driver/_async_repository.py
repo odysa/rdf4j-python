@@ -25,9 +25,20 @@ from rdf4j_python.model.term import (
 from rdf4j_python.utils.const import Rdf4jContentType
 from rdf4j_python.utils.helpers import serialize_statements
 
+try:
+    from SPARQLWrapper import SPARQLWrapper
+
+    _has_sparql_wrapper = True
+except ImportError:
+    _has_sparql_wrapper = False
+
 
 class AsyncRdf4JRepository:
     """Asynchronous interface for interacting with an RDF4J repository."""
+
+    _client: AsyncApiClient
+    _repository_id: str
+    _sparql_wrapper: Optional["SPARQLWrapper"] = None
 
     def __init__(self, client: AsyncApiClient, repository_id: str):
         """Initializes the repository interface.
@@ -39,30 +50,43 @@ class AsyncRdf4JRepository:
         self._client = client
         self._repository_id = repository_id
 
+    async def get_sparql_wrapper(self) -> "SPARQLWrapper":
+        """Returns the SPARQLWrapper for the repository.
+
+        Returns:
+            SPARQLWrapper: The SPARQLWrapper for the repository.
+        """
+        if not _has_sparql_wrapper:
+            raise ImportError(
+                "SPARQLWrapper is not installed. Please install it with `pip install rdf4j-python[sparqlwrapper]`"
+            )
+
+        if self._sparql_wrapper is None:
+            self._sparql_wrapper = SPARQLWrapper(
+                f"{self._client.get_base_url()}/repositories/{self._repository_id}"
+            )
+        return self._sparql_wrapper
+
     async def query(
         self,
         sparql_query: str,
         infer: bool = True,
-        accept: Rdf4jContentType = Rdf4jContentType.SPARQL_RESULTS_JSON,
-    ):
+    ) -> og.QuerySolutions | og.QueryBoolean:
         """Executes a SPARQL SELECT query.
 
         Args:
             sparql_query (str): The SPARQL query string.
             infer (bool): Whether to include inferred statements. Defaults to True.
-            accept (Rdf4jContentType): The expected response format.
 
         Returns:
-            dict or str: Parsed JSON results or raw response text.
+            og.QuerySolutions | og.QueryBoolean: Parsed query results.
         """
         path = f"/repositories/{self._repository_id}"
         params = {"query": sparql_query, "infer": str(infer).lower()}
-        headers = {"Accept": accept}
+        headers = {"Accept": Rdf4jContentType.SPARQL_RESULTS_JSON}
         response = await self._client.get(path, params=params, headers=headers)
         self._handle_repo_not_found_exception(response)
-        if "json" in response.headers.get("Content-Type", ""):
-            return response.json()
-        return response.text
+        return og.parse_query_results(response.text, format=og.QueryResultsFormat.JSON)
 
     async def update(self, sparql_update: str):
         """Executes a SPARQL UPDATE command.
@@ -74,8 +98,9 @@ class AsyncRdf4JRepository:
             RepositoryNotFoundException: If the repository doesn't exist.
             httpx.HTTPStatusError: If the update fails.
         """
+        # TODO: handle update results
         path = f"/repositories/{self._repository_id}/statements"
-        headers = {"Content-Type": Rdf4jContentType.SPARQL_UPDATE.value}
+        headers = {"Content-Type": Rdf4jContentType.SPARQL_UPDATE}
         response = await self._client.post(path, data=sparql_update, headers=headers)
         self._handle_repo_not_found_exception(response)
         response.raise_for_status()
@@ -97,6 +122,7 @@ class AsyncRdf4JRepository:
         query_solutions = og.parse_query_results(
             response.text, format=og.QueryResultsFormat.JSON
         )
+        assert isinstance(query_solutions, og.QuerySolutions)
         return [
             Namespace.from_sparql_query_solution(query_solution)
             for query_solution in query_solutions

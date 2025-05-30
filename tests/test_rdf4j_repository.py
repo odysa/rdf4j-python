@@ -257,3 +257,94 @@ async def test_repo_replace_statements_contexts(mem_repo: AsyncRdf4JRepository):
     assert new_statement_2 in resultSet
     assert old_statement_1 not in resultSet
     assert old_statement_2 not in resultSet
+
+
+@pytest.mark.asyncio
+async def test_repo_query_simple_select(mem_repo: AsyncRdf4JRepository):
+    await mem_repo.add_statements(
+        [
+            Triple(ex["subject1"], ex["predicate"], Literal("test_object")),
+            Triple(ex["subject2"], ex["predicate"], Literal("test_object2")),
+        ]
+    )
+    result = await mem_repo.query("SELECT * WHERE { ?s ?p ?o }")
+    result_list = list(result)
+    assert len(result_list) == 2
+    assert result_list[0]["s"] == ex["subject1"]
+    assert result_list[0]["p"] == ex["predicate"]
+    assert result_list[0]["o"] == Literal("test_object")
+    assert result_list[1]["s"] == ex["subject2"]
+    assert result_list[1]["p"] == ex["predicate"]
+    assert result_list[1]["o"] == Literal("test_object2")
+
+
+@pytest.mark.asyncio
+async def test_repo_query_simple_select_with_filter(mem_repo: AsyncRdf4JRepository):
+    await mem_repo.add_statements(
+        [
+            Triple(ex["subject1"], ex["predicate"], Literal("test_object")),
+            Triple(ex["subject2"], ex["predicate"], Literal("test_object2")),
+        ]
+    )
+    result = await mem_repo.query(
+        "SELECT * WHERE { ?s ?p ?o FILTER(?o = 'test_object') }"
+    )
+    result_list = list(result)
+    assert len(result_list) == 1
+    assert result_list[0]["s"] == ex["subject1"]
+    assert result_list[0]["p"] == ex["predicate"]
+    assert result_list[0]["o"] == Literal("test_object")
+
+
+@pytest.mark.asyncio
+async def test_repo_group_by(mem_repo: AsyncRdf4JRepository):
+    await mem_repo.add_statements(
+        [
+            Triple(ex["subject1"], ex["predicate"], Literal("test_object")),
+            Triple(ex["subject2"], ex["predicate"], Literal("test_object2")),
+        ]
+    )
+    result = await mem_repo.query(
+        "SELECT ?s (COUNT(?p) AS ?count) WHERE { ?s ?p ?o } GROUP BY ?s"
+    )
+    result_list = list(result)
+    assert len(result_list) == 2
+    assert result_list[0]["count"] == Literal(1)
+    assert result_list[1]["count"] == Literal(1)
+
+
+@pytest.mark.asyncio
+async def test_repo_query_with_order_by(mem_repo: AsyncRdf4JRepository):
+    await mem_repo.add_statements(
+        [
+            Triple(ex["subject3"], ex["predicate"], Literal("test_object3")),
+            Triple(ex["subject1"], ex["predicate"], Literal("test_object1")),
+            Triple(ex["subject2"], ex["predicate"], Literal("test_object2")),
+        ]
+    )
+    result = await mem_repo.query("SELECT * WHERE { ?s ?p ?o } ORDER BY ?s")
+    result_list = list(result)
+    assert len(result_list) == 3
+    assert result_list[0]["s"] == ex["subject1"]
+    assert result_list[1]["s"] == ex["subject2"]
+    assert result_list[2]["s"] == ex["subject3"]
+
+
+@pytest.mark.asyncio
+async def test_repo_query_with_limit(mem_repo: AsyncRdf4JRepository):
+    await mem_repo.add_statements(
+        [
+            Triple(ex["subject1"], ex["predicate"], Literal("test_object1")),
+            Triple(ex["subject2"], ex["predicate"], Literal("test_object2")),
+            Triple(ex["subject3"], ex["predicate"], Literal("test_object3")),
+        ]
+    )
+    result = await mem_repo.query("SELECT * WHERE { ?s ?p ?o } LIMIT 2")
+    result_list = list(result)
+    assert len(result_list) == 2
+    assert result_list[0]["s"] == ex["subject1"]
+    assert result_list[0]["p"] == ex["predicate"]
+    assert result_list[0]["o"] == Literal("test_object1")
+    assert result_list[1]["s"] == ex["subject2"]
+    assert result_list[1]["p"] == ex["predicate"]
+    assert result_list[1]["o"] == Literal("test_object2")
