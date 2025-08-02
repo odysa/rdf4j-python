@@ -392,7 +392,7 @@ async def test_sparql_repository_creation(rdf4j_service: str):
     async with AsyncRdf4j(rdf4j_service) as db:
         try:
             # This would create a SPARQL repository if endpoints were valid
-            repo = await db.create_repository(config=config)
+            await db.create_repository(config=config)
             
             # Verify it was created
             repos = await db.list_repositories()
