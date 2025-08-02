@@ -68,7 +68,7 @@ class RepositoryConfig:
 
     def to_turtle(self) -> bytes | None:
         """
-        Serializes the Repository configuration to Turtle syntax using .
+        Serializes the Repository configuration to Turtle syntax using pyoxigraph.
 
         Returns:
             bytes | None: A UTF-8 encoded Turtle string representing the RDF4J repository configuration.
@@ -98,7 +98,7 @@ class RepositoryConfig:
 
 class RepositoryImplConfig:
     """
-    Base class for repository implementation configurations using .
+    Base class for repository implementation configurations using RDF4J.
     """
 
     def __init__(self, rep_type: str):
@@ -222,7 +222,7 @@ class SailRepositoryConfig(RepositoryImplConfig):
 
 class DatasetRepositoryConfig(RepositoryImplConfig):
     """
-    Configuration for a DatasetRepository using .
+    Configuration for a DatasetRepository using RDF datasets.
     """
 
     TYPE = "openrdf:DatasetRepository"
@@ -243,7 +243,7 @@ class DatasetRepositoryConfig(RepositoryImplConfig):
 
 class SailConfig:
     """
-    Base class for SAIL configurations using .
+    Base class for SAIL configurations using RDF4J's Storage and Inference Layer.
     """
 
     def __init__(
@@ -317,7 +317,7 @@ class SailConfig:
 
 class MemoryStoreConfig(SailConfig):
     """
-    Configuration for a MemoryStore using .
+    Configuration for a MemoryStore using in-memory RDF storage.
     """
 
     TYPE = "openrdf:MemoryStore"
@@ -344,7 +344,7 @@ class MemoryStoreConfig(SailConfig):
 
 class NativeStoreConfig(SailConfig):
     """
-    Configuration for a NativeStore using .
+    Configuration for a NativeStore using persistent file-based RDF storage.
     """
 
     TYPE = "openrdf:NativeStore"
@@ -383,7 +383,7 @@ class NativeStoreConfig(SailConfig):
 
 class ElasticsearchStoreConfig(SailConfig):
     """
-    Configuration for an ElasticsearchStore using .
+    Configuration for an ElasticsearchStore using Elasticsearch for RDF storage.
     """
 
     TYPE = "rdf4j:ElasticsearchStore"
@@ -415,7 +415,7 @@ class ElasticsearchStoreConfig(SailConfig):
 
 class SchemaCachingRDFSInferencerConfig(SailConfig):
     """
-    Configuration for the RDF Schema inferencer using .
+    Configuration for the RDF Schema inferencer using schema caching for performance.
     """
 
     TYPE = "rdf4j:SchemaCachingRDFSInferencer"
@@ -458,7 +458,7 @@ class SchemaCachingRDFSInferencerConfig(SailConfig):
 
 class DirectTypeHierarchyInferencerConfig(SailConfig):
     """
-    Configuration for the Direct Type inferencer using .
+    Configuration for the Direct Type inferencer using type hierarchy inference.
     """
 
     TYPE = "openrdf:DirectTypeHierarchyInferencer"
@@ -501,7 +501,7 @@ class DirectTypeHierarchyInferencerConfig(SailConfig):
 
 class SHACLSailConfig(SailConfig):
     """
-    Configuration for the SHACL Sail using .
+    Configuration for the SHACL Sail using SHACL constraint validation.
     """
 
     TYPE = "rdf4j:ShaclSail"
