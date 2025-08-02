@@ -100,7 +100,8 @@ class AsyncRdf4JRepository:
             RepositoryNotFoundException: If the repository doesn't exist.
             httpx.HTTPStatusError: If the update fails.
         """
-        # TODO: handle update results
+        # SPARQL UPDATE operations return HTTP 204 No Content on success.
+        # No result data is returned as per SPARQL 1.1 UPDATE specification.
         path = f"/repositories/{self._repository_id}/statements"
         headers = {"Content-Type": content_type}
         response = await self._client.post(
