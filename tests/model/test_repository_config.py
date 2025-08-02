@@ -29,7 +29,7 @@ def assert_isomorphic(turtle1: bytes | None, turtle2: bytes | None):
 
 class TestRepositoryConfig:
     def test_minimal_config(self):
-        config = RepositoryConfig.Builder(repo_id="test_repo").build()
+        config = RepositoryConfig(repo_id="test_repo")
         expected_turtle = """
             @prefix config: <tag:rdf4j.org,2023:config/> .
             [] a config:Repository ;
@@ -38,22 +38,17 @@ class TestRepositoryConfig:
         assert_isomorphic(config.to_turtle(), expected_turtle.encode())
 
     def test_full_config(self):
-        memory_store_config = (
-            MemoryStoreConfig.Builder()
-            .persist(True)
-            .sync_delay(1000)
-            .iteration_cache_sync_threshold(5000)
-            .default_query_evaluation_mode("STANDARD")
-            .build()
+        memory_store_config = MemoryStoreConfig(
+            persist=True,
+            sync_delay=1000,
+            iteration_cache_sync_threshold=5000,
+            default_query_evaluation_mode="STANDARD"
         )
-        sail_repo_config = SailRepositoryConfig.Builder(
-            sail_impl=memory_store_config
-        ).build()
-        config = (
-            RepositoryConfig.Builder(repo_id="full_test_repo")
-            .title("Full Test Repository")
-            .repo_impl(sail_repo_config)
-            .build()
+        sail_repo_config = SailRepositoryConfig(sail_impl=memory_store_config)
+        config = RepositoryConfig(
+            repo_id="full_test_repo",
+            title="Full Test Repository",
+            impl=sail_repo_config
         )
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -77,15 +72,13 @@ class TestRepositoryConfig:
         assert_isomorphic(config.to_turtle(), expected_turtle.encode())
 
     def test_sparql_repo_config(self):
-        sparql_config = (
-            SPARQLRepositoryConfig.Builder(query_endpoint="http://example.com/sparql")
-            .update_endpoint("http://example.com/sparql/update")
-            .build()
+        sparql_config = SPARQLRepositoryConfig(
+            query_endpoint="http://example.com/sparql",
+            update_endpoint="http://example.com/sparql/update"
         )
-        repo_config = (
-            RepositoryConfig.Builder(repo_id="sparql_repo")
-            .repo_impl(sparql_config)
-            .build()
+        repo_config = RepositoryConfig(
+            repo_id="sparql_repo",
+            impl=sparql_config
         )
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -103,15 +96,12 @@ class TestRepositoryConfig:
         assert_isomorphic(repo_config.to_turtle(), expected_turtle.encode())
 
     def test_http_repo_config(self):
-        http_config = (
-            HTTPRepositoryConfig.Builder(url="http://example.com/rdf4j")
-            .username("user1")
-            .password("pass2")
-            .build()
+        http_config = HTTPRepositoryConfig(
+            url="http://example.com/rdf4j",
+            username="user1",
+            password="pass2"
         )
-        repo_config = (
-            RepositoryConfig.Builder(repo_id="http_repo").repo_impl(http_config).build()
-        )
+        repo_config = RepositoryConfig(repo_id="http_repo", impl=http_config)
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
             @prefix config: <tag:rdf4j.org,2023:config/> .
@@ -129,17 +119,12 @@ class TestRepositoryConfig:
         assert_isomorphic(repo_config.to_turtle(), expected_turtle.encode())
 
     def test_dataset_repo_config(self):
-        memory_store_config = MemoryStoreConfig.Builder().persist(False).build()
-        sail_repo_config = SailRepositoryConfig.Builder(
-            sail_impl=memory_store_config
-        ).build()
-        dataset_config = DatasetRepositoryConfig.Builder(
-            delegate=sail_repo_config
-        ).build()
-        repo_config = (
-            RepositoryConfig.Builder(repo_id="dataset_repo")
-            .repo_impl(dataset_config)
-            .build()
+        memory_store_config = MemoryStoreConfig(persist=False)
+        sail_repo_config = SailRepositoryConfig(sail_impl=memory_store_config)
+        dataset_config = DatasetRepositoryConfig(delegate=sail_repo_config)
+        repo_config = RepositoryConfig(
+            repo_id="dataset_repo",
+            impl=dataset_config
         )
 
         expected_turtle = """
@@ -163,22 +148,19 @@ class TestRepositoryConfig:
         assert_isomorphic(repo_config.to_turtle(), expected_turtle.encode())
 
     def test_native_store_config(self):
-        native_config = (
-            NativeStoreConfig.Builder()
-            .triple_indexes("spoc,posc")
-            .force_sync(True)
-            .value_cache_size(10000)
-            .value_id_cache_size(5000)
-            .namespace_cache_size(200)
-            .namespace_id_cache_size(100)
-            .iteration_cache_sync_threshold(20000)
-            .default_query_evaluation_mode("STANDARD")
-            .build()
+        native_config = NativeStoreConfig(
+            triple_indexes="spoc,posc",
+            force_sync=True,
+            value_cache_size=10000,
+            value_id_cache_size=5000,
+            namespace_cache_size=200,
+            namespace_id_cache_size=100,
+            iteration_cache_sync_threshold=20000,
+            default_query_evaluation_mode="STANDARD"
         )
-        repo_config = (
-            RepositoryConfig.Builder(repo_id="native_repo")
-            .repo_impl(SailRepositoryConfig.Builder().sail_impl(native_config).build())
-            .build()
+        repo_config = RepositoryConfig(
+            repo_id="native_repo",
+            impl=SailRepositoryConfig(sail_impl=native_config)
         )
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -205,19 +187,17 @@ class TestRepositoryConfig:
         assert_isomorphic(repo_config.to_turtle(), expected_turtle.encode())
 
     def test_elasticsearch_store_config(self):
-        es_config = (
-            ElasticsearchStoreConfig.Builder(hostname="localhost")
-            .port(9200)
-            .cluster_name("mycluster")
-            .index("myindex")
-            .iteration_cache_sync_threshold(10000)
-            .default_query_evaluation_mode("STANDARD")
-            .build()
+        es_config = ElasticsearchStoreConfig(
+            hostname="localhost",
+            port=9200,
+            cluster_name="mycluster",
+            index="myindex",
+            iteration_cache_sync_threshold=10000,
+            default_query_evaluation_mode="STANDARD"
         )
-        repo_config = (
-            RepositoryConfig.Builder(repo_id="es_repo")
-            .repo_impl(SailRepositoryConfig.Builder(sail_impl=es_config).build())
-            .build()
+        repo_config = RepositoryConfig(
+            repo_id="es_repo",
+            impl=SailRepositoryConfig(sail_impl=es_config)
         )
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -242,19 +222,16 @@ class TestRepositoryConfig:
         assert_isomorphic(repo_config.to_turtle(), expected_turtle.encode())
 
     def test_memory_store_config_defaults(self):
-        config = (
-            RepositoryConfig.Builder(repo_id="memory_store_repo")
-            .repo_impl(
-                SailRepositoryConfig.Builder(
-                    sail_impl=MemoryStoreConfig.Builder()
-                    .persist(False)
-                    .sync_delay(1000)
-                    .iteration_cache_sync_threshold(5000)
-                    .default_query_evaluation_mode("STANDARD")
-                    .build()
-                ).build()
+        config = RepositoryConfig(
+            repo_id="memory_store_repo",
+            impl=SailRepositoryConfig(
+                sail_impl=MemoryStoreConfig(
+                    persist=False,
+                    sync_delay=1000,
+                    iteration_cache_sync_threshold=5000,
+                    default_query_evaluation_mode="STANDARD"
+                )
             )
-            .build()
         )
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .

@@ -7,14 +7,10 @@ from rdf4j_python.model.term import IRI, Literal
 
 async def main():
     async with AsyncRdf4j("http://localhost:19780/rdf4j-server") as db:
-        repo_config = (
-            RepositoryConfig.Builder()
-            .repo_id("example-repo-2")
-            .title("Example Repository")
-            .sail_repository_impl(
-                MemoryStoreConfig.Builder().persist(False).build(),
-            )
-            .build()
+        repo_config = RepositoryConfig(
+            repo_id="example-repo-2",
+            title="Example Repository",
+            sail_impl=MemoryStoreConfig(persist=False)
         )
         repo = await db.create_repository(config=repo_config)
         await repo.add_statement(
