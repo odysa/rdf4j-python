@@ -451,10 +451,7 @@ class SchemaCachingRDFSInferencerConfig(SailConfig):
         Returns:
             URIRef: The URIRef of the added configuration.
         """
-        sail_node = super().add_to_graph(graph)
-        delegate_node = self.config_params["delegate"].to_rdf(graph)
-        graph.add(Quad(sail_node, CONFIG.delegate, delegate_node, None))
-        return sail_node
+        return super().add_to_graph(graph)
 
 
 
@@ -497,10 +494,7 @@ class DirectTypeHierarchyInferencerConfig(SailConfig):
         Returns:
             URIRef: The URIRef of the added configuration.
         """
-        sail_node = super().add_to_graph(graph)
-        delegate_node = self.config_params["delegate"].to_rdf(graph)
-        graph.add(Quad(sail_node, CONFIG["delegate"], delegate_node, None))
-        return sail_node
+        return super().add_to_graph(graph)
 
 
 
@@ -617,40 +611,6 @@ class SHACLSailConfig(SailConfig):
         Returns:
             URIRef: The URIRef of the added configuration.
         """
-        sail_node = super().add_to_graph(graph)  # Get the basic node
-        delegate_node = self.config_params["delegate"].to_rdf(graph)
-        graph.add(Quad(sail_node, CONFIG.delegate, delegate_node, None))
-
-        # Add SHACL-specific parameters
-        for key, value in self.config_params.items():
-            if key != "delegate":  # Delegate is already handled
-                if isinstance(value, bool):
-                    graph.add(
-                        Quad(
-                            sail_node,
-                            CONFIG[key],
-                            Literal(str(value).lower(), datatype=XSD["boolean"]),
-                            None,
-                        )
-                    )
-                elif isinstance(value, int) and not isinstance(value, bool):
-                    graph.add(
-                        Quad(
-                            sail_node,
-                            CONFIG[key],
-                            Literal(str(value), datatype=XSD["integer"]),
-                            None,
-                        )
-                    )
-                else:
-                    graph.add(
-                        Quad(
-                            sail_node,
-                            CONFIG[key],
-                            Literal(value),
-                            None,
-                        )
-                    )
-        return sail_node
+        return super().add_to_graph(graph)
 
 
