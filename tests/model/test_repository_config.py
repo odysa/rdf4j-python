@@ -264,7 +264,7 @@ class TestRepositoryConfig:
             title="Convenience Repository",
             impl=SailRepositoryConfig(sail_impl=memory_config)
         )
-        
+
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
             @prefix config: <tag:rdf4j.org,2023:config/> .
@@ -295,7 +295,7 @@ class TestRepositoryConfig:
             repo_id="rdfs_repo",
             impl=SailRepositoryConfig(sail_impl=rdfs_config)
         )
-        
+
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
             @prefix config: <tag:rdf4j.org,2023:config/> .
@@ -330,7 +330,7 @@ class TestRepositoryConfig:
             repo_id="hierarchy_repo",
             impl=SailRepositoryConfig(sail_impl=hierarchy_config)
         )
-        
+
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
             @prefix config: <tag:rdf4j.org,2023:config/> .
@@ -380,7 +380,7 @@ class TestRepositoryConfig:
             repo_id="shacl_repo",
             impl=SailRepositoryConfig(sail_impl=shacl_config)
         )
-        
+
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
             @prefix config: <tag:rdf4j.org,2023:config/> .
@@ -426,7 +426,7 @@ class TestRepositoryConfig:
             repo_id="shacl_minimal_repo",
             impl=SailRepositoryConfig(sail_impl=shacl_config)
         )
-        
+
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
             @prefix config: <tag:rdf4j.org,2023:config/> .
@@ -463,7 +463,7 @@ class TestRepositoryConfig:
             repo_id="nested_repo",
             impl=SailRepositoryConfig(sail_impl=hierarchy_config)
         )
-        
+
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
             @prefix config: <tag:rdf4j.org,2023:config/> .
