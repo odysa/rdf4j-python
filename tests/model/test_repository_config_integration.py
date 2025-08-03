@@ -410,7 +410,7 @@ async def test_multiple_repositories_with_different_configs(rdf4j_service: str):
         RepositoryConfig(
             repo_id=f"multi_memory_{randint(1, 1000000)}",
             title="Multi Test Memory Repository",
-            sail_impl=MemoryStoreConfig(persist=False)
+            impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(persist=False))
         ),
         RepositoryConfig(
             repo_id=f"multi_native_{randint(1, 1000000)}",
