@@ -12,6 +12,7 @@ from rdf4j_python._driver._async_rdf4j_db import AsyncRdf4j
 from rdf4j_python.model.repository_config import (
     MemoryStoreConfig,
     RepositoryConfig,
+    SailRepositoryConfig,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ def random_mem_repo_config() -> RepositoryConfig:
     return RepositoryConfig(
         repo_id=repo_id,
         title=title,
-        sail_impl=MemoryStoreConfig(persist=False)
+        impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(persist=False))
     )
 
 

@@ -256,13 +256,13 @@ class TestRepositoryConfig:
         """
         assert_isomorphic(config.to_turtle(), expected_turtle.encode())
 
-    def test_repository_config_with_sail_impl_convenience(self):
-        """Test the convenience sail_impl parameter in RepositoryConfig constructor."""
+    def test_repository_config_with_sail_repository_impl(self):
+        """Test RepositoryConfig with SailRepositoryConfig implementation."""
         memory_config = MemoryStoreConfig(persist=True)
         repo_config = RepositoryConfig(
             repo_id="convenience_repo",
             title="Convenience Repository",
-            sail_impl=memory_config
+            impl=SailRepositoryConfig(sail_impl=memory_config)
         )
         
         expected_turtle = """

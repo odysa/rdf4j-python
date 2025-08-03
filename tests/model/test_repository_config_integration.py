@@ -33,7 +33,7 @@ async def test_memory_store_repository_creation(rdf4j_service: str):
     config = RepositoryConfig(
         repo_id=repo_id,
         title="Memory Store Test Repository",
-        sail_impl=MemoryStoreConfig(persist=False)
+        impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(persist=False))
     )
     
     async with AsyncRdf4j(rdf4j_service) as db:
@@ -331,17 +331,17 @@ async def test_nested_inferencer_repository_creation(rdf4j_service: str):
 
 @pytest.mark.asyncio
 async def test_repository_config_convenience_parameter(rdf4j_service: str):
-    """Test creating a repository using the convenience sail_impl parameter."""
+    """Test creating a repository using SailRepositoryConfig."""
     repo_id = random_repo_id()
     
-    # Use the convenience sail_impl parameter
+    # Use SailRepositoryConfig directly instead of convenience parameter
     config = RepositoryConfig(
         repo_id=repo_id,
         title="Convenience Parameter Test Repository",
-        sail_impl=MemoryStoreConfig(
+        impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(
             persist=True,
             sync_delay=2000
-        )
+        ))
     )
     
     async with AsyncRdf4j(rdf4j_service) as db:

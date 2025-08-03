@@ -26,7 +26,6 @@ class RepositoryConfig:
         repo_id: str,
         title: Optional[str] = None,
         impl: Optional["RepositoryImplConfig"] = None,
-        sail_impl: Optional["SailConfig"] = None,
     ):
         """
         Initializes a new RepositoryConfig instance.
@@ -35,16 +34,10 @@ class RepositoryConfig:
             repo_id (str): The unique identifier for the repository.
             title (Optional[str], optional): A human-readable title for the repository. Defaults to None.
             impl (Optional[RepositoryImplConfig], optional): The implementation configuration for the repository. Defaults to None.
-            sail_impl (Optional[SailConfig], optional): If provided, creates a SailRepositoryConfig with this sail implementation. Defaults to None.
         """
         self._repo_id = repo_id
         self._title = title
-        
-        # If sail_impl is provided, create a SailRepositoryConfig automatically
-        if sail_impl is not None:
-            self._impl = SailRepositoryConfig(sail_impl=sail_impl)
-        else:
-            self._impl = impl
+        self._impl = impl
 
     @property
     def repo_id(self) -> str:
