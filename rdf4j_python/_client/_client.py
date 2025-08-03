@@ -42,6 +42,17 @@ class BaseClient:
 class SyncApiClient(BaseClient):
     """Synchronous API client using httpx.Client."""
 
+    def __init__(self, base_url: str, timeout: int = 10):
+        """
+        Initializes the SyncApiClient.
+
+        Args:
+            base_url (str): The base URL for the API endpoints.
+            timeout (int, optional): Request timeout in seconds. Defaults to 10.
+        """
+        super().__init__(base_url, timeout)
+        self.client = httpx.Client(timeout=self.timeout)
+
     def __enter__(self):
         """
         Enters the context and initializes the HTTP client.
@@ -49,7 +60,7 @@ class SyncApiClient(BaseClient):
         Returns:
             SyncApiClient: The instance of the client.
         """
-        self.client = httpx.Client(timeout=self.timeout).__enter__()
+        self.client.__enter__()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -142,6 +153,17 @@ class SyncApiClient(BaseClient):
 class AsyncApiClient(BaseClient):
     """Asynchronous API client using httpx.AsyncClient."""
 
+    def __init__(self, base_url: str, timeout: int = 10):
+        """
+        Initializes the AsyncApiClient.
+
+        Args:
+            base_url (str): The base URL for the API endpoints.
+            timeout (int, optional): Request timeout in seconds. Defaults to 10.
+        """
+        super().__init__(base_url, timeout)
+        self.client = httpx.AsyncClient(timeout=self.timeout)
+
     async def __aenter__(self):
         """
         Enters the async context and initializes the HTTP client.
@@ -149,7 +171,7 @@ class AsyncApiClient(BaseClient):
         Returns:
             AsyncApiClient: The instance of the client.
         """
-        self.client = await httpx.AsyncClient(timeout=self.timeout).__aenter__()
+        await self.client.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
