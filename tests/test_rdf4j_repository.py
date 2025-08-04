@@ -160,12 +160,12 @@ async def test_repo_get_statements(mem_repo: AsyncRdf4JRepository):
     assert statement_1 in resultSet
     assert statement_2 in resultSet
 
-    context_resultSet = list(
+    context_resultset = list(
         await mem_repo.get_statements(contexts=[ex["context1"], ex["context2"]])
     )
-    assert len(context_resultSet) == 2
-    assert statement_1 in context_resultSet
-    assert statement_4 in context_resultSet
+    assert len(context_resultset) == 2
+    assert statement_1 in context_resultset
+    assert statement_4 in context_resultset
 
 
 @pytest.mark.asyncio
