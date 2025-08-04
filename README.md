@@ -42,7 +42,7 @@ pip install rdf4j-python[sparqlwrapper]
 ```bash
 git clone https://github.com/odysa/rdf4j-python.git
 cd rdf4j-python
-pip install -e .[dev]
+uv sync --group dev
 ```
 
 ## Usage
@@ -175,7 +175,7 @@ For more detailed examples, see the [examples](examples/) directory.
 
 2. **Install development dependencies**:
    ```bash
-   pip install -e .[dev]
+   uv sync --group dev
    ```
 
 3. **Start RDF4J Server** (for integration tests):
