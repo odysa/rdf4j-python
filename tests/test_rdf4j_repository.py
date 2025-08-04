@@ -1,4 +1,5 @@
 import pytest
+from pyoxigraph import QuerySolutions
 
 from rdf4j_python import AsyncRdf4JRepository
 from rdf4j_python.exception.repo_exception import (
@@ -154,14 +155,12 @@ async def test_repo_get_statements(mem_repo: AsyncRdf4JRepository):
 
     await mem_repo.add_statements([statement_1, statement_2, statement_3, statement_4])
 
-    resultSet: QuadResultSet = list(
-        await mem_repo.get_statements(subject=ex["subject1"])
-    )
+    resultSet = list(await mem_repo.get_statements(subject=ex["subject1"]))
     assert len(resultSet) == 2
     assert statement_1 in resultSet
     assert statement_2 in resultSet
 
-    context_resultSet: QuadResultSet = list(
+    context_resultSet = list(
         await mem_repo.get_statements(contexts=[ex["context1"], ex["context2"]])
     )
     assert len(context_resultSet) == 2
@@ -209,7 +208,7 @@ async def test_repo_replace_statements(mem_repo: AsyncRdf4JRepository):
     await mem_repo.add_statements([old_statement_1, old_statement_2])
     await mem_repo.replace_statements([new_statement_1, new_statement_2])
 
-    resultSet: QuadResultSet = list(await mem_repo.get_statements())
+    resultSet = list(await mem_repo.get_statements())
     assert len(resultSet) == 2
     assert new_statement_1 in resultSet
     assert new_statement_2 in resultSet
@@ -244,7 +243,7 @@ async def test_repo_replace_statements_contexts(mem_repo: AsyncRdf4JRepository):
         ex["context"],
     )
     await mem_repo.add_statements([old_statement_1, old_statement_2])
-    resultSet: QuadResultSet = list(await mem_repo.get_statements())
+    resultSet = list(await mem_repo.get_statements())
     assert len(resultSet) == 2
     assert old_statement_1 in resultSet
     assert old_statement_2 in resultSet
@@ -253,7 +252,7 @@ async def test_repo_replace_statements_contexts(mem_repo: AsyncRdf4JRepository):
         [new_statement_1, new_statement_2],
         contexts=[ex["context"]],
     )
-    resultSet: QuadResultSet = list(await mem_repo.get_statements())
+    resultSet = list(await mem_repo.get_statements())
     assert len(resultSet) == 2
     assert new_statement_1 in resultSet
     assert new_statement_2 in resultSet
@@ -270,6 +269,7 @@ async def test_repo_query_simple_select(mem_repo: AsyncRdf4JRepository):
         ]
     )
     result = await mem_repo.query("SELECT * WHERE { ?s ?p ?o }")
+    assert isinstance(result, QuerySolutions)
     result_list = list(result)
     assert len(result_list) == 2
     assert result_list[0]["s"] == ex["subject1"]
@@ -291,6 +291,7 @@ async def test_repo_query_simple_select_with_filter(mem_repo: AsyncRdf4JReposito
     result = await mem_repo.query(
         "SELECT * WHERE { ?s ?p ?o FILTER(?o = 'test_object') }"
     )
+    assert isinstance(result, QuerySolutions)
     result_list = list(result)
     assert len(result_list) == 1
     assert result_list[0]["s"] == ex["subject1"]
@@ -309,6 +310,7 @@ async def test_repo_group_by(mem_repo: AsyncRdf4JRepository):
     result = await mem_repo.query(
         "SELECT ?s (COUNT(?p) AS ?count) WHERE { ?s ?p ?o } GROUP BY ?s"
     )
+    assert isinstance(result, QuerySolutions)
     result_list = list(result)
     assert len(result_list) == 2
     assert result_list[0]["count"] == Literal(1)
@@ -325,6 +327,7 @@ async def test_repo_query_with_order_by(mem_repo: AsyncRdf4JRepository):
         ]
     )
     result = await mem_repo.query("SELECT * WHERE { ?s ?p ?o } ORDER BY ?s")
+    assert isinstance(result, QuerySolutions)
     result_list = list(result)
     assert len(result_list) == 3
     assert result_list[0]["s"] == ex["subject1"]
@@ -342,6 +345,7 @@ async def test_repo_query_with_limit(mem_repo: AsyncRdf4JRepository):
         ]
     )
     result = await mem_repo.query("SELECT * WHERE { ?s ?p ?o } LIMIT 2")
+    assert isinstance(result, QuerySolutions)
     result_list = list(result)
     assert len(result_list) == 2
     assert result_list[0]["s"] == ex["subject1"]
@@ -359,6 +363,7 @@ async def test_repo_update(mem_repo: AsyncRdf4JRepository):
         Rdf4jContentType.SPARQL_UPDATE,
     )
     result = await mem_repo.query("SELECT * WHERE { ?s ?p ?o }")
+    assert isinstance(result, QuerySolutions)
     result_list = list(result)
     assert len(result_list) == 1
     assert result_list[0]["s"] == ex["subject1"]

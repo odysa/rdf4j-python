@@ -45,13 +45,13 @@ class TestRepositoryConfig:
             persist=True,
             sync_delay=1000,
             iteration_cache_sync_threshold=5000,
-            default_query_evaluation_mode="STANDARD"
+            default_query_evaluation_mode="STANDARD",
         )
         sail_repo_config = SailRepositoryConfig(sail_impl=memory_store_config)
         config = RepositoryConfig(
             repo_id="full_test_repo",
             title="Full Test Repository",
-            impl=sail_repo_config
+            impl=sail_repo_config,
         )
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -77,12 +77,9 @@ class TestRepositoryConfig:
     def test_sparql_repo_config(self):
         sparql_config = SPARQLRepositoryConfig(
             query_endpoint="http://example.com/sparql",
-            update_endpoint="http://example.com/sparql/update"
+            update_endpoint="http://example.com/sparql/update",
         )
-        repo_config = RepositoryConfig(
-            repo_id="sparql_repo",
-            impl=sparql_config
-        )
+        repo_config = RepositoryConfig(repo_id="sparql_repo", impl=sparql_config)
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
             @prefix config: <tag:rdf4j.org,2023:config/> .
@@ -100,9 +97,7 @@ class TestRepositoryConfig:
 
     def test_http_repo_config(self):
         http_config = HTTPRepositoryConfig(
-            url="http://example.com/rdf4j",
-            username="user1",
-            password="pass2"
+            url="http://example.com/rdf4j", username="user1", password="pass2"
         )
         repo_config = RepositoryConfig(repo_id="http_repo", impl=http_config)
         expected_turtle = """
@@ -125,10 +120,7 @@ class TestRepositoryConfig:
         memory_store_config = MemoryStoreConfig(persist=False)
         sail_repo_config = SailRepositoryConfig(sail_impl=memory_store_config)
         dataset_config = DatasetRepositoryConfig(delegate=sail_repo_config)
-        repo_config = RepositoryConfig(
-            repo_id="dataset_repo",
-            impl=dataset_config
-        )
+        repo_config = RepositoryConfig(repo_id="dataset_repo", impl=dataset_config)
 
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -159,11 +151,10 @@ class TestRepositoryConfig:
             namespace_cache_size=200,
             namespace_id_cache_size=100,
             iteration_cache_sync_threshold=20000,
-            default_query_evaluation_mode="STANDARD"
+            default_query_evaluation_mode="STANDARD",
         )
         repo_config = RepositoryConfig(
-            repo_id="native_repo",
-            impl=SailRepositoryConfig(sail_impl=native_config)
+            repo_id="native_repo", impl=SailRepositoryConfig(sail_impl=native_config)
         )
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -196,11 +187,10 @@ class TestRepositoryConfig:
             cluster_name="mycluster",
             index="myindex",
             iteration_cache_sync_threshold=10000,
-            default_query_evaluation_mode="STANDARD"
+            default_query_evaluation_mode="STANDARD",
         )
         repo_config = RepositoryConfig(
-            repo_id="es_repo",
-            impl=SailRepositoryConfig(sail_impl=es_config)
+            repo_id="es_repo", impl=SailRepositoryConfig(sail_impl=es_config)
         )
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -232,9 +222,9 @@ class TestRepositoryConfig:
                     persist=False,
                     sync_delay=1000,
                     iteration_cache_sync_threshold=5000,
-                    default_query_evaluation_mode="STANDARD"
+                    default_query_evaluation_mode="STANDARD",
                 )
-            )
+            ),
         )
         expected_turtle = """
             @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -262,7 +252,7 @@ class TestRepositoryConfig:
         repo_config = RepositoryConfig(
             repo_id="convenience_repo",
             title="Convenience Repository",
-            impl=SailRepositoryConfig(sail_impl=memory_config)
+            impl=SailRepositoryConfig(sail_impl=memory_config),
         )
 
         expected_turtle = """
@@ -289,11 +279,10 @@ class TestRepositoryConfig:
         rdfs_config = SchemaCachingRDFSInferencerConfig(
             delegate=memory_config,
             iteration_cache_sync_threshold=10000,
-            default_query_evaluation_mode="STANDARD"
+            default_query_evaluation_mode="STANDARD",
         )
         repo_config = RepositoryConfig(
-            repo_id="rdfs_repo",
-            impl=SailRepositoryConfig(sail_impl=rdfs_config)
+            repo_id="rdfs_repo", impl=SailRepositoryConfig(sail_impl=rdfs_config)
         )
 
         expected_turtle = """
@@ -324,11 +313,11 @@ class TestRepositoryConfig:
         hierarchy_config = DirectTypeHierarchyInferencerConfig(
             delegate=native_config,
             iteration_cache_sync_threshold=5000,
-            default_query_evaluation_mode="STRICT"
+            default_query_evaluation_mode="STRICT",
         )
         repo_config = RepositoryConfig(
             repo_id="hierarchy_repo",
-            impl=SailRepositoryConfig(sail_impl=hierarchy_config)
+            impl=SailRepositoryConfig(sail_impl=hierarchy_config),
         )
 
         expected_turtle = """
@@ -374,11 +363,10 @@ class TestRepositoryConfig:
             validation_results_limit_total=1000,
             validation_results_limit_per_constraint=100,
             iteration_cache_sync_threshold=15000,
-            default_query_evaluation_mode="STANDARD"
+            default_query_evaluation_mode="STANDARD",
         )
         repo_config = RepositoryConfig(
-            repo_id="shacl_repo",
-            impl=SailRepositoryConfig(sail_impl=shacl_config)
+            repo_id="shacl_repo", impl=SailRepositoryConfig(sail_impl=shacl_config)
         )
 
         expected_turtle = """
@@ -424,7 +412,7 @@ class TestRepositoryConfig:
         shacl_config = SHACLSailConfig(delegate=memory_config)
         repo_config = RepositoryConfig(
             repo_id="shacl_minimal_repo",
-            impl=SailRepositoryConfig(sail_impl=shacl_config)
+            impl=SailRepositoryConfig(sail_impl=shacl_config),
         )
 
         expected_turtle = """
@@ -452,16 +440,13 @@ class TestRepositoryConfig:
         # Create a chain: Memory -> RDFS Inferencer -> Direct Type Hierarchy Inferencer
         memory_config = MemoryStoreConfig(persist=True)
         rdfs_config = SchemaCachingRDFSInferencerConfig(
-            delegate=memory_config,
-            iteration_cache_sync_threshold=8000
+            delegate=memory_config, iteration_cache_sync_threshold=8000
         )
         hierarchy_config = DirectTypeHierarchyInferencerConfig(
-            delegate=rdfs_config,
-            iteration_cache_sync_threshold=12000
+            delegate=rdfs_config, iteration_cache_sync_threshold=12000
         )
         repo_config = RepositoryConfig(
-            repo_id="nested_repo",
-            impl=SailRepositoryConfig(sail_impl=hierarchy_config)
+            repo_id="nested_repo", impl=SailRepositoryConfig(sail_impl=hierarchy_config)
         )
 
         expected_turtle = """

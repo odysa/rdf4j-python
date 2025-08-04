@@ -1,7 +1,11 @@
 import asyncio
 
 from rdf4j_python import AsyncRdf4j
-from rdf4j_python.model.repository_config import MemoryStoreConfig, RepositoryConfig, SailRepositoryConfig
+from rdf4j_python.model.repository_config import (
+    MemoryStoreConfig,
+    RepositoryConfig,
+    SailRepositoryConfig,
+)
 from rdf4j_python.model.term import IRI, Literal
 
 
@@ -10,7 +14,7 @@ async def main():
         repo_config = RepositoryConfig(
             repo_id="example-repo-2",
             title="Example Repository",
-            impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(persist=False))
+            impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(persist=False)),
         )
         repo = await db.create_repository(config=repo_config)
         await repo.add_statement(
