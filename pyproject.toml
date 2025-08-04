@@ -10,6 +10,9 @@ dependencies = ["httpx>=0.28.1", "pyoxigraph>=0.4.10"]
 [project.optional-dependencies]
 sparqlwrapper = ["sparqlwrapper>=2.0.0"]
 
+[project.scripts]
+rdf4j-cli = "rdf4j_python.cli:main"
+
 [dependency-groups]
 dev = [
     "pytest>=8.3.5",
