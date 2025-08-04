@@ -3,6 +3,7 @@
 These tests verify that the repository configurations can be used to actually create
 repositories in an RDF4J server and perform basic operations.
 """
+
 import pytest
 from random import randint
 
@@ -33,7 +34,7 @@ async def test_memory_store_repository_creation(rdf4j_service: str):
     config = RepositoryConfig(
         repo_id=repo_id,
         title="Memory Store Test Repository",
-        impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(persist=False))
+        impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(persist=False)),
     )
 
     async with AsyncRdf4j(rdf4j_service) as db:
@@ -73,11 +74,8 @@ async def test_native_store_repository_creation(rdf4j_service: str):
         repo_id=repo_id,
         title="Native Store Test Repository",
         impl=SailRepositoryConfig(
-            sail_impl=NativeStoreConfig(
-                triple_indexes="spoc,posc",
-                force_sync=False
-            )
-        )
+            sail_impl=NativeStoreConfig(triple_indexes="spoc,posc", force_sync=False)
+        ),
     )
 
     async with AsyncRdf4j(rdf4j_service) as db:
@@ -114,9 +112,7 @@ async def test_dataset_repository_creation(rdf4j_service: str):
     dataset_config = DatasetRepositoryConfig(delegate=sail_config)
 
     config = RepositoryConfig(
-        repo_id=repo_id,
-        title="Dataset Test Repository",
-        impl=dataset_config
+        repo_id=repo_id, title="Dataset Test Repository", impl=dataset_config
     )
 
     async with AsyncRdf4j(rdf4j_service) as db:
@@ -152,14 +148,13 @@ async def test_rdfs_inferencer_repository_creation(rdf4j_service: str):
     repo_id = random_repo_id()
     memory_config = MemoryStoreConfig(persist=False)
     rdfs_config = SchemaCachingRDFSInferencerConfig(
-        delegate=memory_config,
-        iteration_cache_sync_threshold=8000
+        delegate=memory_config, iteration_cache_sync_threshold=8000
     )
 
     config = RepositoryConfig(
         repo_id=repo_id,
         title="RDFS Inferencer Test Repository",
-        impl=SailRepositoryConfig(sail_impl=rdfs_config)
+        impl=SailRepositoryConfig(sail_impl=rdfs_config),
     )
 
     async with AsyncRdf4j(rdf4j_service) as db:
@@ -181,10 +176,16 @@ async def test_rdfs_inferencer_repository_creation(rdf4j_service: str):
 
             # Verify the statement was added (RDFS inferencer adds many additional statements)
             statements = list(await repo.get_statements())
-            assert len(statements) > 1  # Should have our statement plus many inferred statements
+            assert (
+                len(statements) > 1
+            )  # Should have our statement plus many inferred statements
 
             # Check that our specific statement is in there
-            our_statements = [s for s in statements if s.subject == subject and s.predicate == predicate and s.object == obj]
+            our_statements = [
+                s
+                for s in statements
+                if s.subject == subject and s.predicate == predicate and s.object == obj
+            ]
             assert len(our_statements) == 1
 
         finally:
@@ -197,14 +198,13 @@ async def test_direct_type_hierarchy_inferencer_repository_creation(rdf4j_servic
     repo_id = random_repo_id()
     memory_config = MemoryStoreConfig(persist=False)
     hierarchy_config = DirectTypeHierarchyInferencerConfig(
-        delegate=memory_config,
-        iteration_cache_sync_threshold=5000
+        delegate=memory_config, iteration_cache_sync_threshold=5000
     )
 
     config = RepositoryConfig(
         repo_id=repo_id,
         title="Direct Type Hierarchy Test Repository",
-        impl=SailRepositoryConfig(sail_impl=hierarchy_config)
+        impl=SailRepositoryConfig(sail_impl=hierarchy_config),
     )
 
     async with AsyncRdf4j(rdf4j_service) as db:
@@ -229,7 +229,11 @@ async def test_direct_type_hierarchy_inferencer_repository_creation(rdf4j_servic
             assert len(statements) >= 1  # Should have at least our statement
 
             # Check that our specific statement is in there
-            our_statements = [s for s in statements if s.subject == subject and s.predicate == predicate and s.object == obj]
+            our_statements = [
+                s
+                for s in statements
+                if s.subject == subject and s.predicate == predicate and s.object == obj
+            ]
             assert len(our_statements) == 1
 
         finally:
@@ -242,15 +246,13 @@ async def test_shacl_sail_repository_creation(rdf4j_service: str):
     repo_id = random_repo_id()
     memory_config = MemoryStoreConfig(persist=False)
     shacl_config = SHACLSailConfig(
-        delegate=memory_config,
-        parallel_validation=True,
-        validation_enabled=True
+        delegate=memory_config, parallel_validation=True, validation_enabled=True
     )
 
     config = RepositoryConfig(
         repo_id=repo_id,
         title="SHACL Sail Test Repository",
-        impl=SailRepositoryConfig(sail_impl=shacl_config)
+        impl=SailRepositoryConfig(sail_impl=shacl_config),
     )
 
     async with AsyncRdf4j(rdf4j_service) as db:
@@ -286,18 +288,16 @@ async def test_nested_inferencer_repository_creation(rdf4j_service: str):
     # Create a chain: Memory → RDFS Inferencer → Direct Type Hierarchy Inferencer
     memory_config = MemoryStoreConfig(persist=False)
     rdfs_config = SchemaCachingRDFSInferencerConfig(
-        delegate=memory_config,
-        iteration_cache_sync_threshold=8000
+        delegate=memory_config, iteration_cache_sync_threshold=8000
     )
     hierarchy_config = DirectTypeHierarchyInferencerConfig(
-        delegate=rdfs_config,
-        iteration_cache_sync_threshold=12000
+        delegate=rdfs_config, iteration_cache_sync_threshold=12000
     )
 
     config = RepositoryConfig(
         repo_id=repo_id,
         title="Nested Inferencer Test Repository",
-        impl=SailRepositoryConfig(sail_impl=hierarchy_config)
+        impl=SailRepositoryConfig(sail_impl=hierarchy_config),
     )
 
     async with AsyncRdf4j(rdf4j_service) as db:
@@ -319,10 +319,16 @@ async def test_nested_inferencer_repository_creation(rdf4j_service: str):
 
             # Verify the statement was added (nested inferencers add many additional statements)
             statements = list(await repo.get_statements())
-            assert len(statements) > 1  # Should have our statement plus many inferred statements
+            assert (
+                len(statements) > 1
+            )  # Should have our statement plus many inferred statements
 
             # Check that our specific statement is in there
-            our_statements = [s for s in statements if s.subject == subject and s.predicate == predicate and s.object == obj]
+            our_statements = [
+                s
+                for s in statements
+                if s.subject == subject and s.predicate == predicate and s.object == obj
+            ]
             assert len(our_statements) == 1
 
         finally:
@@ -338,10 +344,9 @@ async def test_repository_config_convenience_parameter(rdf4j_service: str):
     config = RepositoryConfig(
         repo_id=repo_id,
         title="Convenience Parameter Test Repository",
-        impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(
-            persist=True,
-            sync_delay=2000
-        ))
+        impl=SailRepositoryConfig(
+            sail_impl=MemoryStoreConfig(persist=True, sync_delay=2000)
+        ),
     )
 
     async with AsyncRdf4j(rdf4j_service) as db:
@@ -380,13 +385,11 @@ async def test_sparql_repository_creation(rdf4j_service: str):
     repo_id = random_repo_id()
     sparql_config = SPARQLRepositoryConfig(
         query_endpoint="http://example.com/sparql",
-        update_endpoint="http://example.com/sparql/update"
+        update_endpoint="http://example.com/sparql/update",
     )
 
     config = RepositoryConfig(
-        repo_id=repo_id,
-        title="SPARQL Test Repository",
-        impl=sparql_config
+        repo_id=repo_id, title="SPARQL Test Repository", impl=sparql_config
     )
 
     async with AsyncRdf4j(rdf4j_service) as db:
@@ -410,14 +413,14 @@ async def test_multiple_repositories_with_different_configs(rdf4j_service: str):
         RepositoryConfig(
             repo_id=f"multi_memory_{randint(1, 1000000)}",
             title="Multi Test Memory Repository",
-            impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(persist=False))
+            impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(persist=False)),
         ),
         RepositoryConfig(
             repo_id=f"multi_native_{randint(1, 1000000)}",
             title="Multi Test Native Repository",
             impl=SailRepositoryConfig(
                 sail_impl=NativeStoreConfig(triple_indexes="spoc")
-            )
+            ),
         ),
         RepositoryConfig(
             repo_id=f"multi_dataset_{randint(1, 1000000)}",
@@ -426,8 +429,8 @@ async def test_multiple_repositories_with_different_configs(rdf4j_service: str):
                 delegate=SailRepositoryConfig(
                     sail_impl=MemoryStoreConfig(persist=False)
                 )
-            )
-        )
+            ),
+        ),
     ]
 
     async with AsyncRdf4j(rdf4j_service) as db:

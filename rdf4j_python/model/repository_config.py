@@ -87,8 +87,6 @@ class RepositoryConfig:
         return serialize(graph, format=RdfFormat.TURTLE)
 
 
-
-
 class RepositoryImplConfig:
     """
     Base class for repository implementation configurations using RDF4J.
@@ -171,8 +169,6 @@ class SPARQLRepositoryConfig(RepositoryImplConfig):
             self.config_params["sparql.updateEndpoint"] = update_endpoint
 
 
-
-
 class HTTPRepositoryConfig(RepositoryImplConfig):
     """
     Configuration for an HTTPRepository.
@@ -189,8 +185,6 @@ class HTTPRepositoryConfig(RepositoryImplConfig):
             self.config_params["http.username"] = username
         if password:
             self.config_params["http.password"] = password
-
-
 
 
 class SailRepositoryConfig(RepositoryImplConfig):
@@ -211,8 +205,6 @@ class SailRepositoryConfig(RepositoryImplConfig):
         return super().add_to_graph(graph)
 
 
-
-
 class DatasetRepositoryConfig(RepositoryImplConfig):
     """
     Configuration for a DatasetRepository using RDF datasets.
@@ -230,8 +222,6 @@ class DatasetRepositoryConfig(RepositoryImplConfig):
         """
         repo_node = super().add_to_graph(graph)
         return repo_node
-
-
 
 
 class SailConfig:
@@ -333,8 +323,6 @@ class MemoryStoreConfig(SailConfig):
             self.config_params["mem.syncDelay"] = sync_delay
 
 
-
-
 class NativeStoreConfig(SailConfig):
     """
     Configuration for a NativeStore using persistent file-based RDF storage.
@@ -372,8 +360,6 @@ class NativeStoreConfig(SailConfig):
             self.config_params["native.namespaceIDCacheSize"] = namespace_id_cache_size
 
 
-
-
 class ElasticsearchStoreConfig(SailConfig):
     """
     Configuration for an ElasticsearchStore using Elasticsearch for RDF storage.
@@ -402,8 +388,6 @@ class ElasticsearchStoreConfig(SailConfig):
             self.config_params["ess.clusterName"] = cluster_name
         if index is not None:
             self.config_params["ess.index"] = index
-
-
 
 
 class SchemaCachingRDFSInferencerConfig(SailConfig):
@@ -447,8 +431,6 @@ class SchemaCachingRDFSInferencerConfig(SailConfig):
         return super().add_to_graph(graph)
 
 
-
-
 class DirectTypeHierarchyInferencerConfig(SailConfig):
     """
     Configuration for the Direct Type inferencer using type hierarchy inference.
@@ -488,8 +470,6 @@ class DirectTypeHierarchyInferencerConfig(SailConfig):
             URIRef: The URIRef of the added configuration.
         """
         return super().add_to_graph(graph)
-
-
 
 
 class SHACLSailConfig(SailConfig):
@@ -605,5 +585,3 @@ class SHACLSailConfig(SailConfig):
             URIRef: The URIRef of the added configuration.
         """
         return super().add_to_graph(graph)
-
-

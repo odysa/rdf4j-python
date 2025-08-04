@@ -1,7 +1,11 @@
 import pytest
 
 from rdf4j_python import AsyncRdf4j
-from rdf4j_python.model.repository_config import MemoryStoreConfig, RepositoryConfig, SailRepositoryConfig
+from rdf4j_python.model.repository_config import (
+    MemoryStoreConfig,
+    RepositoryConfig,
+    SailRepositoryConfig,
+)
 
 
 @pytest.mark.asyncio
@@ -46,7 +50,7 @@ async def test_list_repos(rdf4j_service: str):
             repo_config = RepositoryConfig(
                 repo_id=repo_id,
                 title=title,
-                impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(persist=False))
+                impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(persist=False)),
             )
             await db.create_repository(
                 config=repo_config,

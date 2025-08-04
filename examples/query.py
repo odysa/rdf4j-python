@@ -1,5 +1,7 @@
 import asyncio
 
+from pyoxigraph import QuerySolutions
+
 from rdf4j_python import AsyncRdf4j
 from rdf4j_python.model.term import IRI, Literal, Quad
 
@@ -24,6 +26,7 @@ async def main():
             ]
         )
         result = await repo.query("SELECT * WHERE { ?s ?p ?o }")
+        assert isinstance(result, QuerySolutions)
         for solution in result:
             print(solution)
 

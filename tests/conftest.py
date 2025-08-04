@@ -60,7 +60,7 @@ def random_mem_repo_config() -> RepositoryConfig:
     return RepositoryConfig(
         repo_id=repo_id,
         title=title,
-        impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(persist=False))
+        impl=SailRepositoryConfig(sail_impl=MemoryStoreConfig(persist=False)),
     )
 
 
