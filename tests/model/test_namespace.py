@@ -69,6 +69,7 @@ def test_namespace_from_sparql_query_solution():
         .to_json(),
         format=og.QueryResultsFormat.JSON,
     )
+    assert isinstance(query_solution, og.QuerySolutions)
     namespace = Namespace.from_sparql_query_solution(next(query_solution))
     assert namespace.prefix == "ex"
     assert namespace.namespace.value == "http://example.org/"

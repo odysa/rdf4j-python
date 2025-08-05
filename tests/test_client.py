@@ -20,6 +20,16 @@ async def test_create_repo(
         assert repos[0].title == random_mem_repo_config.title
         await db.delete_repository(random_mem_repo_config.repo_id)
 
+    # test with out async context manager
+    db = AsyncRdf4j(rdf4j_service)
+    await db.create_repository(config=random_mem_repo_config)
+    repos = await db.list_repositories()
+    assert len(repos) == 1
+    assert repos[0].id == random_mem_repo_config.repo_id
+    assert repos[0].title == random_mem_repo_config.title
+    await db.delete_repository(random_mem_repo_config.repo_id)
+    await db.aclose()
+
 
 @pytest.mark.asyncio
 async def test_delete_repo(
@@ -36,6 +46,18 @@ async def test_delete_repo(
         await db.delete_repository(random_mem_repo_config.repo_id)
         repos = await db.list_repositories()
         assert len(repos) == 0
+
+    # test with out async context manager
+    db = AsyncRdf4j(rdf4j_service)
+    await db.create_repository(config=random_mem_repo_config)
+    repos = await db.list_repositories()
+    assert len(repos) == 1
+    assert repos[0].id == random_mem_repo_config.repo_id
+    assert repos[0].title == random_mem_repo_config.title
+    await db.delete_repository(random_mem_repo_config.repo_id)
+    repos = await db.list_repositories()
+    assert len(repos) == 0
+    await db.aclose()
 
 
 @pytest.mark.asyncio
