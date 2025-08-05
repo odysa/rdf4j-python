@@ -273,3 +273,9 @@ class AsyncApiClient(BaseClient):
         return await self.client.delete(
             self._build_url(path), params=params, headers=headers
         )
+
+    async def aclose(self):
+        """
+        Asynchronously closes the client connection.
+        """
+        await self.client.aclose()

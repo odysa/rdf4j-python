@@ -26,6 +26,7 @@ class AsyncRdf4j:
             base_url (str): Base URL of the RDF4J server.
         """
         self._base_url = base_url.rstrip("/")
+        self._client = AsyncApiClient(base_url=self._base_url)
 
     async def __aenter__(self):
         """Enters the async context and initializes the HTTP client.
@@ -33,7 +34,7 @@ class AsyncRdf4j:
         Returns:
             AsyncRdf4j: The initialized RDF4J interface.
         """
-        self._client = await AsyncApiClient(base_url=self._base_url).__aenter__()
+        self._client = await self._client.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
@@ -103,7 +104,7 @@ class AsyncRdf4j:
             RepositoryCreationException: If repository creation fails.
         """
         path = f"/repositories/{config.repo_id}"
-        headers = {"Content-Type": Rdf4jContentType.TURTLE}
+        headers = {"Content-Type": Rdf4jContentType.TURTLE.value}
         response: httpx.Response = await self._client.put(
             path, content=config.to_turtle(), headers=headers
         )
@@ -128,3 +129,7 @@ class AsyncRdf4j:
             raise RepositoryDeletionException(
                 f"Failed to delete repository '{repository_id}': {response.status_code} - {response.text}"
             )
+
+    async def aclose(self):
+        """Asynchronously closes the client connection."""
+        await self._client.aclose()
