@@ -20,7 +20,7 @@ async def test_create_repo(
         assert repos[0].title == random_mem_repo_config.title
         await db.delete_repository(random_mem_repo_config.repo_id)
 
-    # test with out async context manager
+    # test without async context manager
     db = AsyncRdf4j(rdf4j_service)
     await db.create_repository(config=random_mem_repo_config)
     repos = await db.list_repositories()
