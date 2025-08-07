@@ -2,9 +2,9 @@ import pytest
 from pyoxigraph import QuerySolutions, QueryTriples, QueryBoolean
 
 from rdf4j_python import AsyncRdf4JRepository
-from rdf4j_python.model.term import IRI, Literal, Triple, Quad
+from rdf4j_python.model.term import IRI, Literal, Quad
 from rdf4j_python.model.vocabulary import EXAMPLE as ex
-from rdf4j_python.model.vocabulary import RDF, RDFS, XSD
+from rdf4j_python.model.vocabulary import RDF, XSD
 
 
 # Sample RDF data for testing
