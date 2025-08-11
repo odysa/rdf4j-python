@@ -71,22 +71,54 @@ class AsyncRdf4JRepository:
         self,
         sparql_query: str,
         infer: bool = True,
-    ) -> og.QuerySolutions | og.QueryBoolean:
-        """Executes a SPARQL SELECT query.
+    ) -> og.QuerySolutions | og.QueryBoolean | og.QueryTriples:
+        """Executes a SPARQL query (SELECT, ASK, CONSTRUCT, or DESCRIBE).
 
         Args:
             sparql_query (str): The SPARQL query string.
             infer (bool): Whether to include inferred statements. Defaults to True.
 
         Returns:
-            og.QuerySolutions | og.QueryBoolean: Parsed query results.
+            og.QuerySolutions | og.QueryBoolean | og.QueryTriples: Parsed query results.
         """
         path = f"/repositories/{self._repository_id}"
         params = {"query": sparql_query, "infer": str(infer).lower()}
-        headers = {"Accept": Rdf4jContentType.SPARQL_RESULTS_JSON}
-        response = await self._client.get(path, params=params, headers=headers)
-        self._handle_repo_not_found_exception(response)
-        return og.parse_query_results(response.text, format=og.QueryResultsFormat.JSON)
+
+        # Detect query type and set appropriate Accept header
+        query_stripped = sparql_query.strip().upper()
+        if query_stripped.startswith("SELECT"):
+            headers = {"Accept": Rdf4jContentType.SPARQL_RESULTS_JSON}
+            response = await self._client.get(path, params=params, headers=headers)
+            self._handle_repo_not_found_exception(response)
+            return og.parse_query_results(
+                response.text, format=og.QueryResultsFormat.JSON
+            )
+        elif query_stripped.startswith("ASK"):
+            headers = {"Accept": Rdf4jContentType.SPARQL_RESULTS_JSON}
+            response = await self._client.get(path, params=params, headers=headers)
+            self._handle_repo_not_found_exception(response)
+            return og.parse_query_results(
+                response.text, format=og.QueryResultsFormat.JSON
+            )
+        elif query_stripped.startswith("CONSTRUCT") or query_stripped.startswith(
+            "DESCRIBE"
+        ):
+            headers = {"Accept": Rdf4jContentType.NTRIPLES}
+            response = await self._client.get(path, params=params, headers=headers)
+            self._handle_repo_not_found_exception(response)
+            # Create temporary store to convert N-Triples response to QueryTriples
+            store = og.Store()
+            for quad in og.parse(response.text, format=og.RdfFormat.N_TRIPLES):
+                store.add(quad)
+            return store.query("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }")
+        else:
+            # Default to JSON for unknown query types
+            headers = {"Accept": Rdf4jContentType.SPARQL_RESULTS_JSON}
+            response = await self._client.get(path, params=params, headers=headers)
+            self._handle_repo_not_found_exception(response)
+            return og.parse_query_results(
+                response.text, format=og.QueryResultsFormat.JSON
+            )
 
     async def update(
         self, sparql_update_query: str, content_type: Rdf4jContentType
