@@ -491,6 +491,7 @@ class AsyncRdf4JRepository:
             )
 
             # If a context is specified, wrap all statements in that context
+            # Note: This overrides any named graph information in the file (e.g., from N-Quads)
             if context is not None:
                 statements = [
                     Quad(q.subject, q.predicate, q.object, context) for q in quads

@@ -218,7 +218,8 @@ async def example_upload_multiple_formats():
         for row in result:
             person = row["person"].value if row["person"] else "N/A"
             name = row["name"].value if row["name"] else "N/A"
-            print(f"   • {person.split('/')[-1]}: {name}")
+            person_id = person.split("/")[-1] if person != "N/A" else person
+            print(f"   • {person_id}: {name}")
 
         # Clean up
         await db.delete_repository("multi-format-example")
