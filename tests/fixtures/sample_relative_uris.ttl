@@ -1,0 +1,3 @@
+<alice> <http://xmlns.com/foaf/0.1/name> "Alice" .
+<bob> <http://xmlns.com/foaf/0.1/name> "Bob" .
+<alice> <http://xmlns.com/foaf/0.1/knows> <bob> .
