@@ -1,0 +1,4 @@
+@prefix ex: <http://example.org/> .
+
+ex:subject1 ex:predicate "test_object1" .
+ex:subject2 ex:predicate "test_object2" .

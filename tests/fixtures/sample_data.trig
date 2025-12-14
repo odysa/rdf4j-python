@@ -1,0 +1,9 @@
+@prefix ex: <http://example.org/> .
+
+<http://example.org/graph1> {
+    ex:subject1 ex:predicate "test_object1" .
+}
+
+<http://example.org/graph2> {
+    ex:subject2 ex:predicate "test_object2" .
+}

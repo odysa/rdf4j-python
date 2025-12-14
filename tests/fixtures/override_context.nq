@@ -1,0 +1,2 @@
+<http://example.org/subject1> <http://example.org/predicate> "original_graph" <http://example.org/original-graph> .
+<http://example.org/subject2> <http://example.org/predicate> "original_graph" <http://example.org/original-graph> .
