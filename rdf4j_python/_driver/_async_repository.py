@@ -1,4 +1,5 @@
-from typing import Iterable, Optional
+from pathlib import Path
+from typing import Iterable, Optional, Union
 
 import httpx
 import pyoxigraph as og
@@ -427,6 +428,86 @@ class AsyncRdf4JRepository:
             raise RepositoryUpdateException(
                 f"Failed to replace statements: {response.text}"
             )
+
+    async def upload_file(
+        self,
+        file_path: Union[str, Path],
+        rdf_format: Optional[og.RdfFormat] = None,
+        context: Optional[Context] = None,
+        base_uri: Optional[str] = None,
+    ):
+        """Uploads an RDF file to the repository.
+
+        This method reads an RDF file from disk and uploads its contents to the repository.
+        The file can be in various RDF formats such as Turtle, N-Triples, N-Quads, RDF/XML, JSON-LD, TriG, or N3.
+
+        Args:
+            file_path (Union[str, Path]): Path to the RDF file to upload.
+            rdf_format (Optional[og.RdfFormat]): The RDF format of the file.
+                If None, the format is automatically detected from the file extension.
+                Supported formats include:
+                - og.RdfFormat.TURTLE (.ttl)
+                - og.RdfFormat.N_TRIPLES (.nt)
+                - og.RdfFormat.N_QUADS (.nq)
+                - og.RdfFormat.RDF_XML (.rdf, .xml)
+                - og.RdfFormat.JSON_LD (.jsonld)
+                - og.RdfFormat.TRIG (.trig)
+                - og.RdfFormat.N3 (.n3)
+            context (Optional[Context]): The named graph (context) to upload statements into.
+                If None, statements are added to the default graph.
+            base_uri (Optional[str]): The base URI for resolving relative URIs in the file.
+                If None, relative URIs are resolved based on the file path.
+
+        Raises:
+            FileNotFoundError: If the specified file doesn't exist.
+            RepositoryNotFoundException: If the repository doesn't exist.
+            RepositoryUpdateException: If the upload fails.
+            ValueError: If the RDF format is not supported.
+            SyntaxError: If the file contains invalid RDF data.
+
+        Example:
+            >>> repo = await db.get_repository("my-repo")
+            >>> # Upload a Turtle file (format auto-detected)
+            >>> await repo.upload_file("data.ttl")
+            >>> # Upload to a specific named graph
+            >>> await repo.upload_file("data.ttl", context=IRI("http://example.com/graph"))
+            >>> # Upload with explicit format
+            >>> await repo.upload_file("data.txt", rdf_format=og.RdfFormat.N_TRIPLES)
+        """
+        file_path = Path(file_path)
+
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        # Parse the RDF file using pyoxigraph
+        try:
+            # If base_uri is not provided, use the file path as base
+            if base_uri is None:
+                base_uri = file_path.as_uri()
+
+            # Parse the file
+            quads = list(
+                og.parse(path=str(file_path), format=rdf_format, base_iri=base_uri)
+            )
+
+            # If a context is specified, wrap all statements in that context
+            # Note: This overrides any named graph information in the file (e.g., from N-Quads)
+            if context is not None:
+                statements = [
+                    Quad(q.subject, q.predicate, q.object, context) for q in quads
+                ]
+            else:
+                statements = quads
+
+            # Upload the statements to the repository
+            await self.add_statements(statements)
+
+        except (ValueError, SyntaxError) as e:
+            raise type(e)(f"Failed to parse RDF file '{file_path}': {e}") from e
+        except Exception as e:
+            raise RepositoryUpdateException(
+                f"Failed to upload file '{file_path}': {e}"
+            ) from e
 
     async def get_named_graph(self, graph: str) -> AsyncNamedGraph:
         """Retrieves a named graph in the repository.

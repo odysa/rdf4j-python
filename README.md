@@ -12,6 +12,7 @@ rdf4j-python bridges the gap between Python and the robust [Eclipse RDF4J](https
 - **🔄 Repository Management**: Create, access, and manage RDF4J repositories programmatically
 - **⚡ SPARQL Support**: Execute SELECT, ASK, CONSTRUCT, and UPDATE queries effortlessly
 - **📊 Flexible Data Handling**: Add, retrieve, and manipulate RDF triples and quads
+- **📤 File Upload**: Upload RDF files (Turtle, N-Triples, N-Quads, RDF/XML, JSON-LD, TriG, N3) directly to repositories
 - **🎯 Multiple Formats**: Support for various RDF serialization formats (Turtle, N-Triples, JSON-LD, etc.)
 - **🛠️ Repository Types**: Memory stores, native stores, HTTP repositories, and more
 - **🔗 Named Graph Support**: Work with multiple graphs within repositories
@@ -159,6 +160,28 @@ async def advanced_example():
         ORDER BY ?name
         """
         results = await repo.query(query)
+```
+
+### Uploading RDF Files
+
+```python
+import pyoxigraph as og
+
+async def upload_example():
+    async with AsyncRdf4j("http://localhost:19780/rdf4j-server") as db:
+        repo = await db.get_repository("my-repo")
+        
+        # Upload a Turtle file (format auto-detected from extension)
+        await repo.upload_file("data.ttl")
+        
+        # Upload to a specific named graph
+        await repo.upload_file("data.ttl", context=IRI("http://example.com/graph"))
+        
+        # Upload with explicit format
+        await repo.upload_file("data.txt", rdf_format=og.RdfFormat.N_TRIPLES)
+        
+        # Upload with base URI for relative URIs
+        await repo.upload_file("data.ttl", base_uri="http://example.com/")
 ```
 
 For more detailed examples, see the [examples](examples/) directory.

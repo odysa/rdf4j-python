@@ -1,0 +1,15 @@
+{
+  "@context": {
+    "ex": "http://example.org/"
+  },
+  "@graph": [
+    {
+      "@id": "ex:subject1",
+      "ex:predicate": "test_object1"
+    },
+    {
+      "@id": "ex:subject2",
+      "ex:predicate": "test_object2"
+    }
+  ]
+}

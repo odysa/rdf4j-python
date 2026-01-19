@@ -1,0 +1,45 @@
+@prefix ex: <http://example.org/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+ex:person1 a foaf:Person ;
+    foaf:name "Person 1" ;
+    foaf:age 25 ;
+    foaf:knows ex:person2 .
+
+ex:person2 a foaf:Person ;
+    foaf:name "Person 2" ;
+    foaf:age 30 ;
+    foaf:knows ex:person3 .
+
+ex:person3 a foaf:Person ;
+    foaf:name "Person 3" ;
+    foaf:age 35 ;
+    foaf:knows ex:person1 .
+
+ex:person4 a foaf:Person ;
+    foaf:name "Person 4" ;
+    foaf:age 40 .
+
+ex:person5 a foaf:Person ;
+    foaf:name "Person 5" ;
+    foaf:age 45 .
+
+ex:person6 a foaf:Person ;
+    foaf:name "Person 6" ;
+    foaf:age 50 .
+
+ex:person7 a foaf:Person ;
+    foaf:name "Person 7" ;
+    foaf:age 55 .
+
+ex:person8 a foaf:Person ;
+    foaf:name "Person 8" ;
+    foaf:age 60 .
+
+ex:person9 a foaf:Person ;
+    foaf:name "Person 9" ;
+    foaf:age 65 .
+
+ex:person10 a foaf:Person ;
+    foaf:name "Person 10" ;
+    foaf:age 70 .

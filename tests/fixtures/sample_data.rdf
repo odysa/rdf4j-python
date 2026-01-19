@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:ex="http://example.org/">
+  <rdf:Description rdf:about="http://example.org/subject1">
+    <ex:predicate>test_object1</ex:predicate>
+  </rdf:Description>
+</rdf:RDF>
