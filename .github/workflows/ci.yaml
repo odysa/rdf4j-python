@@ -33,5 +33,8 @@ jobs:
       - name: Lint with Ruff
         run: ruff check .
 
+      - name: Type check with ty
+        run: uv run ty check
+
       - name: Run tests
         run: pytest tests
