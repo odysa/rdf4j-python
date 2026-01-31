@@ -1,22 +1,28 @@
 # rdf4j-python
 
+[![PyPI version](https://badge.fury.io/py/rdf4j-python.svg)](https://badge.fury.io/py/rdf4j-python)
+[![Python Versions](https://img.shields.io/pypi/pyversions/rdf4j-python.svg)](https://pypi.org/project/rdf4j-python/)
+[![CI](https://github.com/odysa/rdf4j-python/actions/workflows/ci.yaml/badge.svg)](https://github.com/odysa/rdf4j-python/actions/workflows/ci.yaml)
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![Documentation](https://img.shields.io/badge/docs-sphinx-blue.svg)](https://github.com/odysa/rdf4j-python/tree/main/docs)
+
 **A modern Python client for the Eclipse RDF4J framework, enabling seamless RDF data management and SPARQL operations from Python applications.**
 
 rdf4j-python bridges the gap between Python and the robust [Eclipse RDF4J](https://rdf4j.org/) ecosystem, providing a clean, async-first API for managing RDF repositories, executing SPARQL queries, and handling semantic data with ease.
 
-> ⚠️ **Note:** This project is currently under active development and considered **experimental**. Interfaces may change. Use with caution in production environments—and feel free to help shape its future!
+> **Note:** This project is under active development. While stable for many use cases, interfaces may evolve. Feedback and contributions are welcome!
 
 ## Features
 
-- **🚀 Async-First Design**: Native support for async/await with synchronous fallback
-- **🔄 Repository Management**: Create, access, and manage RDF4J repositories programmatically
-- **⚡ SPARQL Support**: Execute SELECT, ASK, CONSTRUCT, and UPDATE queries effortlessly
-- **📊 Flexible Data Handling**: Add, retrieve, and manipulate RDF triples and quads
-- **📤 File Upload**: Upload RDF files (Turtle, N-Triples, N-Quads, RDF/XML, JSON-LD, TriG, N3) directly to repositories
-- **🎯 Multiple Formats**: Support for various RDF serialization formats (Turtle, N-Triples, JSON-LD, etc.)
-- **🛠️ Repository Types**: Memory stores, native stores, HTTP repositories, and more
-- **🔗 Named Graph Support**: Work with multiple graphs within repositories
-- **⚙️ Inferencing**: Built-in support for RDFS and custom inferencing rules
+- **Async-First Design**: Native support for async/await with synchronous fallback
+- **Repository Management**: Create, access, and manage RDF4J repositories programmatically
+- **SPARQL Support**: Execute SELECT, ASK, CONSTRUCT, and UPDATE queries effortlessly
+- **Flexible Data Handling**: Add, retrieve, and manipulate RDF triples and quads
+- **File Upload**: Upload RDF files (Turtle, N-Triples, N-Quads, RDF/XML, JSON-LD, TriG, N3) directly to repositories
+- **Multiple Formats**: Support for various RDF serialization formats
+- **Repository Types**: Memory stores, native stores, HTTP repositories, and more
+- **Named Graph Support**: Work with multiple graphs within repositories
+- **Inferencing**: Built-in support for RDFS and custom inferencing rules
 
 ## Installation
 
@@ -232,17 +238,17 @@ tests/              # Test suite
 docs/               # Documentation
 ```
 
-### Contributing
+## Contributing
 
 We welcome contributions! Here's how to get involved:
 
-1. **Fork** the repository on GitHub
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Make** your changes and add tests
-4. **Run** the test suite to ensure everything works
-5. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-6. **Push** to your branch (`git push origin feature/amazing-feature`)
-7. **Open** a Pull Request
+1. Fork the repository on GitHub
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes and add tests
+4. Run the test suite to ensure everything works
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to your branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
 ### Running Examples
 
@@ -254,15 +260,14 @@ python examples/query.py
 
 ## License
 
-This project is licensed under the **BSD 3-Clause License**. See the [LICENSE](LICENSE) file for the full license text.
+This project is licensed under the BSD 3-Clause License. See the [LICENSE](LICENSE) file for details.
 
-```
 Copyright (c) 2025, Chengxu Bian
-All rights reserved.
-```
 
----
+## Support
 
-**Questions or Issues?** Please feel free to [open an issue](https://github.com/odysa/rdf4j-python/issues) on GitHub.
+- **Issues & Bug Reports**: [GitHub Issues](https://github.com/odysa/rdf4j-python/issues)
+- **Documentation**: [docs/](https://github.com/odysa/rdf4j-python/tree/main/docs)
+- **Questions**: Feel free to open a discussion or issue
 
-**⭐ Star this repo** if you find it useful!
+If you find this project useful, please consider starring the repository!
