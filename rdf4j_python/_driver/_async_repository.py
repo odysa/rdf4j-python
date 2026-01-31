@@ -27,7 +27,7 @@ from rdf4j_python.utils.const import Rdf4jContentType
 from rdf4j_python.utils.helpers import serialize_statements
 
 try:
-    from SPARQLWrapper import SPARQLWrapper
+    from SPARQLWrapper import SPARQLWrapper  # type: ignore[import-untyped]
 
     _has_sparql_wrapper = True
 except ImportError:
