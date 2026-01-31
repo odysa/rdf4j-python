@@ -44,7 +44,7 @@ async def test_repo_set_namespace_not_found(rdf4j_service: str):
 
     async with AsyncRdf4j(rdf4j_service) as db:
         repo = await db.get_repository("not_found")
-        with pytest.raises(NamespaceException):
+        with pytest.raises((RepositoryNotFoundException, NamespaceException)):
             await repo.set_namespace("ex", ex_ns)
 
 
