@@ -4,7 +4,7 @@ authors = [{ name = "Chengxu Bian", email = "cbian564@gmail.com" }]
 version = "0.1.6"
 description = "The Python client for RDF4J"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = ["httpx>=0.28.1", "pyoxigraph>=0.4.10"]
 
 [project.optional-dependencies]
