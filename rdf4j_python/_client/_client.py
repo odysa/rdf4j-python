@@ -1,4 +1,5 @@
-from typing import Any, Dict, Optional
+from types import TracebackType
+from typing import Any, Self
 
 import httpx
 
@@ -42,7 +43,7 @@ class BaseClient:
 class SyncApiClient(BaseClient):
     """Synchronous API client using httpx.Client."""
 
-    def __init__(self, base_url: str, timeout: int = 10):
+    def __init__(self, base_url: str, timeout: int = 10) -> None:
         """
         Initializes the SyncApiClient.
 
@@ -53,7 +54,7 @@ class SyncApiClient(BaseClient):
         super().__init__(base_url, timeout)
         self.client = httpx.Client(timeout=self.timeout)
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         """
         Enters the context and initializes the HTTP client.
 
@@ -63,7 +64,12 @@ class SyncApiClient(BaseClient):
         self.client.__enter__()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
         """
         Exits the context and closes the HTTP client.
         """
@@ -72,16 +78,16 @@ class SyncApiClient(BaseClient):
     def get(
         self,
         path: str,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         """
         Sends a GET request.
 
         Args:
             path (str): API endpoint path.
-            params (Optional[Dict[str, Any]]): Query parameters.
-            headers (Optional[Dict[str, str]]): Request headers.
+            params (dict[str, Any] | None): Query parameters.
+            headers (dict[str, str] | None): Request headers.
 
         Returns:
             httpx.Response: The HTTP response.
@@ -91,69 +97,81 @@ class SyncApiClient(BaseClient):
     def post(
         self,
         path: str,
-        data: Optional[Dict[str, Any]] = None,
-        json: Optional[Any] = None,
-        headers: Optional[Dict[str, str]] = None,
+        content: str | bytes | None = None,
+        json: Any | None = None,
+        headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         """
         Sends a POST request.
 
         Args:
             path (str): API endpoint path.
-            data (Optional[Dict[str, Any]]): Form-encoded body data.
-            json (Optional[Any]): JSON-encoded body data.
-            headers (Optional[Dict[str, str]]): Request headers.
+            content (str | bytes | None): Raw content to include in the request body.
+            json (Any | None): JSON-encoded body data.
+            headers (dict[str, str] | None): Request headers.
 
         Returns:
             httpx.Response: The HTTP response.
         """
         return self.client.post(
-            self._build_url(path), data=data, json=json, headers=headers
+            self._build_url(path), content=content, json=json, headers=headers
         )
 
     def put(
         self,
         path: str,
-        data: Optional[Dict[str, Any]] = None,
-        json: Optional[Any] = None,
-        headers: Optional[Dict[str, str]] = None,
+        content: str | bytes | None = None,
+        params: dict[str, Any] | None = None,
+        json: Any | None = None,
+        headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         """
         Sends a PUT request.
 
         Args:
             path (str): API endpoint path.
-            data (Optional[Dict[str, Any]]): Form-encoded body data.
-            json (Optional[Any]): JSON-encoded body data.
-            headers (Optional[Dict[str, str]]): Request headers.
+            content (str | bytes | None): Raw content to include in the request body.
+            params (dict[str, Any] | None): Query parameters.
+            json (Any | None): JSON-encoded body data.
+            headers (dict[str, str] | None): Request headers.
 
         Returns:
             httpx.Response: The HTTP response.
         """
         return self.client.put(
-            self._build_url(path), data=data, json=json, headers=headers
+            self._build_url(path),
+            content=content,
+            json=json,
+            headers=headers,
+            params=params,
         )
 
     def delete(
-        self, path: str, headers: Optional[Dict[str, str]] = None
+        self,
+        path: str,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         """
         Sends a DELETE request.
 
         Args:
             path (str): API endpoint path.
-            headers (Optional[Dict[str, str]]): Request headers.
+            params (dict[str, Any] | None): Query parameters.
+            headers (dict[str, str] | None): Request headers.
 
         Returns:
             httpx.Response: The HTTP response.
         """
-        return self.client.delete(self._build_url(path), headers=headers)
+        return self.client.delete(
+            self._build_url(path), params=params, headers=headers
+        )
 
 
 class AsyncApiClient(BaseClient):
     """Asynchronous API client using httpx.AsyncClient."""
 
-    def __init__(self, base_url: str, timeout: int = 10):
+    def __init__(self, base_url: str, timeout: int = 10) -> None:
         """
         Initializes the AsyncApiClient.
 
@@ -164,7 +182,7 @@ class AsyncApiClient(BaseClient):
         super().__init__(base_url, timeout)
         self.client = httpx.AsyncClient(timeout=self.timeout)
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> Self:
         """
         Enters the async context and initializes the HTTP client.
 
@@ -174,7 +192,12 @@ class AsyncApiClient(BaseClient):
         await self.client.__aenter__()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
         """
         Exits the async context and closes the HTTP client.
         """
@@ -183,16 +206,16 @@ class AsyncApiClient(BaseClient):
     async def get(
         self,
         path: str,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         """
         Sends an asynchronous GET request.
 
         Args:
             path (str): API endpoint path.
-            params (Optional[Dict[str, Any]]): Query parameters.
-            headers (Optional[Dict[str, str]]): Request headers.
+            params (dict[str, Any] | None): Query parameters.
+            headers (dict[str, str] | None): Request headers.
 
         Returns:
             httpx.Response: The HTTP response.
@@ -204,18 +227,18 @@ class AsyncApiClient(BaseClient):
     async def post(
         self,
         path: str,
-        content: Optional[str] = None,
-        json: Optional[Any] = None,
-        headers: Optional[Dict[str, str]] = None,
+        content: str | bytes | None = None,
+        json: Any | None = None,
+        headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         """
         Sends an asynchronous POST request.
 
         Args:
             path (str): API endpoint path.
-            content (Optional[str]): Raw string content to include in the request body.
-            json (Optional[Any]): JSON-encoded body data.
-            headers (Optional[Dict[str, str]]): Request headers.
+            content (str | bytes | None): Raw content to include in the request body.
+            json (Any | None): JSON-encoded body data.
+            headers (dict[str, str] | None): Request headers.
 
         Returns:
             httpx.Response: The HTTP response.
@@ -227,20 +250,20 @@ class AsyncApiClient(BaseClient):
     async def put(
         self,
         path: str,
-        content: Optional[bytes] = None,
-        params: Optional[Dict[str, Any]] = None,
-        json: Optional[Any] = None,
-        headers: Optional[Dict[str, str]] = None,
+        content: str | bytes | None = None,
+        params: dict[str, Any] | None = None,
+        json: Any | None = None,
+        headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         """
         Sends an asynchronous PUT request.
 
         Args:
             path (str): API endpoint path.
-            content (Optional[bytes]): Raw bytes to include in the request body.
-            params (Optional[Dict[str, Any]]): Query parameters.
-            json (Optional[Any]): JSON-encoded body data.
-            headers (Optional[Dict[str, str]]): Request headers.
+            content (str | bytes | None): Raw content to include in the request body.
+            params (dict[str, Any] | None): Query parameters.
+            json (Any | None): JSON-encoded body data.
+            headers (dict[str, str] | None): Request headers.
 
         Returns:
             httpx.Response: The HTTP response.
@@ -256,16 +279,16 @@ class AsyncApiClient(BaseClient):
     async def delete(
         self,
         path: str,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         """
         Sends an asynchronous DELETE request.
 
         Args:
             path (str): API endpoint path.
-            params (Optional[Dict[str, Any]]): Query parameters.
-            headers (Optional[Dict[str, str]]): Request headers.
+            params (dict[str, Any] | None): Query parameters.
+            headers (dict[str, str] | None): Request headers.
 
         Returns:
             httpx.Response: The HTTP response.
@@ -274,7 +297,7 @@ class AsyncApiClient(BaseClient):
             self._build_url(path), params=params, headers=headers
         )
 
-    async def aclose(self):
+    async def aclose(self) -> None:
         """
         Asynchronously closes the client connection.
         """

@@ -144,7 +144,7 @@ class AsyncRdf4JRepository:
         if response.status_code != httpx.codes.NO_CONTENT:
             raise RepositoryUpdateException(f"Failed to update: {response.text}")
 
-    async def get_namespaces(self):
+    async def get_namespaces(self) -> list[Namespace]:
         """Retrieves all namespaces in the repository.
 
         Returns:
@@ -161,7 +161,10 @@ class AsyncRdf4JRepository:
         query_solutions = og.parse_query_results(
             response.text, format=og.QueryResultsFormat.JSON
         )
-        assert isinstance(query_solutions, og.QuerySolutions)
+        if not isinstance(query_solutions, og.QuerySolutions):
+            raise TypeError(
+                f"Expected QuerySolutions, got {type(query_solutions).__name__}"
+            )
         return [
             Namespace.from_sparql_query_solution(query_solution)
             for query_solution in query_solutions
@@ -210,7 +213,7 @@ class AsyncRdf4JRepository:
 
         return Namespace(prefix, response.text)
 
-    async def delete_namespace(self, prefix: str):
+    async def delete_namespace(self, prefix: str) -> None:
         """Deletes a namespace by prefix.
 
         Args:
@@ -225,7 +228,7 @@ class AsyncRdf4JRepository:
         self._handle_repo_not_found_exception(response)
         response.raise_for_status()
 
-    async def clear_all_namespaces(self):
+    async def clear_all_namespaces(self) -> None:
         """Removes all namespaces from the repository.
 
         Raises:
@@ -301,7 +304,7 @@ class AsyncRdf4JRepository:
         predicate: Optional[Predicate] = None,
         object_: Optional[Object] = None,
         contexts: Optional[list[Context]] = None,
-    ):
+    ) -> None:
         """Deletes statements from the repository matching the given pattern.
 
         Args:
@@ -341,7 +344,7 @@ class AsyncRdf4JRepository:
         predicate: Predicate,
         object: Object,
         context: Optional[Context] = None,
-    ):
+    ) -> None:
         """Adds a single RDF statement to the repository.
 
         Args:
@@ -370,7 +373,7 @@ class AsyncRdf4JRepository:
         if response.status_code != httpx.codes.NO_CONTENT:
             raise RepositoryUpdateException(f"Failed to add statement: {response.text}")
 
-    async def add_statements(self, statements: Iterable[Quad] | Iterable[Triple]):
+    async def add_statements(self, statements: Iterable[Quad] | Iterable[Triple]) -> None:
         """Adds a list of RDF statements to the repository.
 
         Args:
@@ -397,7 +400,7 @@ class AsyncRdf4JRepository:
         statements: Iterable[Quad] | Iterable[Triple],
         contexts: Optional[Iterable[Context]] = None,
         base_uri: Optional[str] = None,
-    ):
+    ) -> None:
         """Replaces all repository statements with the given RDF data.
 
         Args:
@@ -435,7 +438,7 @@ class AsyncRdf4JRepository:
         rdf_format: Optional[og.RdfFormat] = None,
         context: Optional[Context] = None,
         base_uri: Optional[str] = None,
-    ):
+    ) -> None:
         """Uploads an RDF file to the repository.
 
         This method reads an RDF file from disk and uploads its contents to the repository.
@@ -517,7 +520,7 @@ class AsyncRdf4JRepository:
         """
         return AsyncNamedGraph(self._client, self._repository_id, graph)
 
-    def _handle_repo_not_found_exception(self, response: httpx.Response):
+    def _handle_repo_not_found_exception(self, response: httpx.Response) -> None:
         """Raises a RepositoryNotFoundException if response is 404.
 
         Args:

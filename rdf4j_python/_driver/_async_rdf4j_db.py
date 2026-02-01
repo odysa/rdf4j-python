@@ -1,3 +1,6 @@
+from types import TracebackType
+from typing import Self
+
 import httpx
 import pyoxigraph as og
 
@@ -28,16 +31,21 @@ class AsyncRdf4j:
         self._base_url = base_url.rstrip("/")
         self._client = AsyncApiClient(base_url=self._base_url)
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> Self:
         """Enters the async context and initializes the HTTP client.
 
         Returns:
             AsyncRdf4j: The initialized RDF4J interface.
         """
-        self._client = await self._client.__aenter__()
+        await self._client.__aenter__()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
         """Closes the HTTP client when exiting the async context."""
         await self._client.__aexit__(exc_type, exc_value, traceback)
 
@@ -70,7 +78,10 @@ class AsyncRdf4j:
         query_solutions = og.parse_query_results(
             response.text, format=og.QueryResultsFormat.JSON
         )
-        assert isinstance(query_solutions, og.QuerySolutions)
+        if not isinstance(query_solutions, og.QuerySolutions):
+            raise TypeError(
+                f"Expected QuerySolutions, got {type(query_solutions).__name__}"
+            )
         return [
             RepositoryMetadata.from_sparql_query_solution(query_solution)
             for query_solution in query_solutions
@@ -114,7 +125,7 @@ class AsyncRdf4j:
             )
         return AsyncRdf4JRepository(self._client, config.repo_id)
 
-    async def delete_repository(self, repository_id: str):
+    async def delete_repository(self, repository_id: str) -> None:
         """Deletes a repository and all its data and configuration.
 
         Args:
@@ -130,6 +141,6 @@ class AsyncRdf4j:
                 f"Failed to delete repository '{repository_id}': {response.status_code} - {response.text}"
             )
 
-    async def aclose(self):
+    async def aclose(self) -> None:
         """Asynchronously closes the client connection."""
         await self._client.aclose()
