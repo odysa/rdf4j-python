@@ -141,6 +141,29 @@ class AsyncRdf4j:
                 f"Failed to delete repository '{repository_id}': {response.status_code} - {response.text}"
             )
 
+    async def health_check(self) -> bool:
+        """Checks if the RDF4J server is reachable and healthy.
+
+        This method attempts to fetch the protocol version from the server
+        to verify connectivity.
+
+        Returns:
+            bool: True if the server is reachable and responds correctly,
+                  False otherwise.
+
+        Example:
+            >>> async with AsyncRdf4j("http://localhost:8080/rdf4j-server") as db:
+            ...     if await db.health_check():
+            ...         print("Server is healthy")
+            ...     else:
+            ...         print("Server is not reachable")
+        """
+        try:
+            response = await self._client.get("/protocol")
+            return response.status_code == httpx.codes.OK
+        except Exception:
+            return False
+
     async def aclose(self) -> None:
         """Asynchronously closes the client connection."""
         await self._client.aclose()

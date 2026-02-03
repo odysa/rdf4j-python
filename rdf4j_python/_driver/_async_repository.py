@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import Iterable, Optional, Union
 
@@ -32,6 +33,84 @@ try:
     _has_sparql_wrapper = True
 except ImportError:
     _has_sparql_wrapper = False
+
+
+# Pattern to match PREFIX declarations (handles URIs with # fragments)
+_PREFIX_PATTERN = re.compile(r"PREFIX\s+\w*:\s*<[^>]*>", re.IGNORECASE)
+# Pattern to match BASE declarations
+_BASE_PATTERN = re.compile(r"BASE\s*<[^>]*>", re.IGNORECASE)
+
+
+def _remove_sparql_comments(query: str) -> str:
+    """Removes SPARQL comments while preserving # inside URIs and strings.
+
+    Args:
+        query (str): The SPARQL query string.
+
+    Returns:
+        str: The query with comments removed.
+    """
+    result = []
+    i = 0
+    in_uri = False
+    in_string = False
+    string_char = None
+
+    while i < len(query):
+        char = query[i]
+
+        if in_string:
+            result.append(char)
+            if char == string_char and (i == 0 or query[i - 1] != "\\"):
+                in_string = False
+            i += 1
+        elif in_uri:
+            result.append(char)
+            if char == ">":
+                in_uri = False
+            i += 1
+        elif char == "<":
+            in_uri = True
+            result.append(char)
+            i += 1
+        elif char in ('"', "'"):
+            in_string = True
+            string_char = char
+            result.append(char)
+            i += 1
+        elif char == "#":
+            # Skip until end of line
+            while i < len(query) and query[i] != "\n":
+                i += 1
+        else:
+            result.append(char)
+            i += 1
+
+    return "".join(result)
+
+
+def _detect_query_type(query: str) -> str:
+    """Detects the SPARQL query type, ignoring prefixes, base, and comments.
+
+    Args:
+        query (str): The SPARQL query string.
+
+    Returns:
+        str: The query type in uppercase (SELECT, ASK, CONSTRUCT, DESCRIBE, INSERT, DELETE, etc.)
+             or empty string if unable to determine.
+    """
+    # Remove comments (preserving # inside URIs)
+    cleaned = _remove_sparql_comments(query)
+    # Remove all PREFIX declarations
+    cleaned = _PREFIX_PATTERN.sub("", cleaned)
+    # Remove all BASE declarations
+    cleaned = _BASE_PATTERN.sub("", cleaned)
+    # Get the first word
+    cleaned = cleaned.strip()
+    if not cleaned:
+        return ""
+    first_word = cleaned.split()[0].upper()
+    return first_word
 
 
 class AsyncRdf4JRepository:
@@ -81,29 +160,32 @@ class AsyncRdf4JRepository:
 
         Returns:
             og.QuerySolutions | og.QueryBoolean | og.QueryTriples: Parsed query results.
+
+        Note:
+            This method correctly handles queries with PREFIX declarations,
+            BASE URIs, and comments before the query keyword.
         """
         path = f"/repositories/{self._repository_id}"
         params = {"query": sparql_query, "infer": str(infer).lower()}
 
-        # Detect query type and set appropriate Accept header
-        query_stripped = sparql_query.strip().upper()
-        if query_stripped.startswith("SELECT"):
+        # Detect query type (handles PREFIX, BASE, comments)
+        query_type = _detect_query_type(sparql_query)
+
+        if query_type == "SELECT":
             headers = {"Accept": Rdf4jContentType.SPARQL_RESULTS_JSON}
             response = await self._client.get(path, params=params, headers=headers)
             self._handle_repo_not_found_exception(response)
             return og.parse_query_results(
                 response.text, format=og.QueryResultsFormat.JSON
             )
-        elif query_stripped.startswith("ASK"):
+        elif query_type == "ASK":
             headers = {"Accept": Rdf4jContentType.SPARQL_RESULTS_JSON}
             response = await self._client.get(path, params=params, headers=headers)
             self._handle_repo_not_found_exception(response)
             return og.parse_query_results(
                 response.text, format=og.QueryResultsFormat.JSON
             )
-        elif query_stripped.startswith("CONSTRUCT") or query_stripped.startswith(
-            "DESCRIBE"
-        ):
+        elif query_type in ("CONSTRUCT", "DESCRIBE"):
             headers = {"Accept": Rdf4jContentType.NTRIPLES}
             response = await self._client.get(path, params=params, headers=headers)
             self._handle_repo_not_found_exception(response)

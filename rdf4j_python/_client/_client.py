@@ -1,7 +1,10 @@
+import logging
 from types import TracebackType
 from typing import Any, Self
 
 import httpx
+
+logger = logging.getLogger("rdf4j_python")
 
 
 class BaseClient:
@@ -43,16 +46,18 @@ class BaseClient:
 class SyncApiClient(BaseClient):
     """Synchronous API client using httpx.Client."""
 
-    def __init__(self, base_url: str, timeout: int = 10) -> None:
+    def __init__(self, base_url: str, timeout: int = 10, retries: int = 3) -> None:
         """
         Initializes the SyncApiClient.
 
         Args:
             base_url (str): The base URL for the API endpoints.
             timeout (int, optional): Request timeout in seconds. Defaults to 10.
+            retries (int, optional): Number of retries for failed requests. Defaults to 3.
         """
         super().__init__(base_url, timeout)
-        self.client = httpx.Client(timeout=self.timeout)
+        transport = httpx.HTTPTransport(retries=retries)
+        self.client = httpx.Client(timeout=self.timeout, transport=transport)
 
     def __enter__(self) -> Self:
         """
@@ -92,7 +97,11 @@ class SyncApiClient(BaseClient):
         Returns:
             httpx.Response: The HTTP response.
         """
-        return self.client.get(self._build_url(path), params=params, headers=headers)
+        url = self._build_url(path)
+        logger.debug("GET %s params=%s", url, params)
+        response = self.client.get(url, params=params, headers=headers)
+        logger.debug("Response %s: %s bytes", response.status_code, len(response.content))
+        return response
 
     def post(
         self,
@@ -113,9 +122,11 @@ class SyncApiClient(BaseClient):
         Returns:
             httpx.Response: The HTTP response.
         """
-        return self.client.post(
-            self._build_url(path), content=content, json=json, headers=headers
-        )
+        url = self._build_url(path)
+        logger.debug("POST %s", url)
+        response = self.client.post(url, content=content, json=json, headers=headers)
+        logger.debug("Response %s: %s bytes", response.status_code, len(response.content))
+        return response
 
     def put(
         self,
@@ -138,13 +149,17 @@ class SyncApiClient(BaseClient):
         Returns:
             httpx.Response: The HTTP response.
         """
-        return self.client.put(
-            self._build_url(path),
+        url = self._build_url(path)
+        logger.debug("PUT %s params=%s", url, params)
+        response = self.client.put(
+            url,
             content=content,
             json=json,
             headers=headers,
             params=params,
         )
+        logger.debug("Response %s: %s bytes", response.status_code, len(response.content))
+        return response
 
     def delete(
         self,
@@ -163,24 +178,28 @@ class SyncApiClient(BaseClient):
         Returns:
             httpx.Response: The HTTP response.
         """
-        return self.client.delete(
-            self._build_url(path), params=params, headers=headers
-        )
+        url = self._build_url(path)
+        logger.debug("DELETE %s params=%s", url, params)
+        response = self.client.delete(url, params=params, headers=headers)
+        logger.debug("Response %s: %s bytes", response.status_code, len(response.content))
+        return response
 
 
 class AsyncApiClient(BaseClient):
     """Asynchronous API client using httpx.AsyncClient."""
 
-    def __init__(self, base_url: str, timeout: int = 10) -> None:
+    def __init__(self, base_url: str, timeout: int = 10, retries: int = 3) -> None:
         """
         Initializes the AsyncApiClient.
 
         Args:
             base_url (str): The base URL for the API endpoints.
             timeout (int, optional): Request timeout in seconds. Defaults to 10.
+            retries (int, optional): Number of retries for failed requests. Defaults to 3.
         """
         super().__init__(base_url, timeout)
-        self.client = httpx.AsyncClient(timeout=self.timeout)
+        transport = httpx.AsyncHTTPTransport(retries=retries)
+        self.client = httpx.AsyncClient(timeout=self.timeout, transport=transport)
 
     async def __aenter__(self) -> Self:
         """
@@ -220,9 +239,11 @@ class AsyncApiClient(BaseClient):
         Returns:
             httpx.Response: The HTTP response.
         """
-        return await self.client.get(
-            self._build_url(path), params=params, headers=headers
-        )
+        url = self._build_url(path)
+        logger.debug("GET %s params=%s", url, params)
+        response = await self.client.get(url, params=params, headers=headers)
+        logger.debug("Response %s: %s bytes", response.status_code, len(response.content))
+        return response
 
     async def post(
         self,
@@ -243,9 +264,11 @@ class AsyncApiClient(BaseClient):
         Returns:
             httpx.Response: The HTTP response.
         """
-        return await self.client.post(
-            self._build_url(path), content=content, json=json, headers=headers
-        )
+        url = self._build_url(path)
+        logger.debug("POST %s", url)
+        response = await self.client.post(url, content=content, json=json, headers=headers)
+        logger.debug("Response %s: %s bytes", response.status_code, len(response.content))
+        return response
 
     async def put(
         self,
@@ -268,13 +291,17 @@ class AsyncApiClient(BaseClient):
         Returns:
             httpx.Response: The HTTP response.
         """
-        return await self.client.put(
-            self._build_url(path),
+        url = self._build_url(path)
+        logger.debug("PUT %s params=%s", url, params)
+        response = await self.client.put(
+            url,
             content=content,
             json=json,
             headers=headers,
             params=params,
         )
+        logger.debug("Response %s: %s bytes", response.status_code, len(response.content))
+        return response
 
     async def delete(
         self,
@@ -293,12 +320,15 @@ class AsyncApiClient(BaseClient):
         Returns:
             httpx.Response: The HTTP response.
         """
-        return await self.client.delete(
-            self._build_url(path), params=params, headers=headers
-        )
+        url = self._build_url(path)
+        logger.debug("DELETE %s params=%s", url, params)
+        response = await self.client.delete(url, params=params, headers=headers)
+        logger.debug("Response %s: %s bytes", response.status_code, len(response.content))
+        return response
 
     async def aclose(self) -> None:
         """
         Asynchronously closes the client connection.
         """
+        logger.debug("Closing async client connection")
         await self.client.aclose()
