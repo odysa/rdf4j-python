@@ -50,7 +50,7 @@ jobs:
       - name: Get version
         id: version
         run: |
-          VERSION=$(grep '^version = "' pyproject.toml | cut -d'"' -f2)
+          VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Commit and tag
