@@ -47,3 +47,15 @@ class NetworkError(Rdf4jError):
 
 class QueryError(Rdf4jError):
     """Exception raised when a SPARQL query is invalid or fails."""
+
+
+class TransactionError(Rdf4jError):
+    """Base exception for transaction-related errors."""
+
+
+class TransactionStateError(TransactionError):
+    """Exception raised when a transaction operation is invalid for the current state.
+
+    For example, trying to commit an already committed transaction,
+    or trying to add statements to a closed transaction.
+    """

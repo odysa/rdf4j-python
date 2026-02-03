@@ -13,6 +13,8 @@ from .repo_exception import (
     RepositoryInternalException,
     RepositoryNotFoundException,
     RepositoryUpdateException,
+    TransactionError,
+    TransactionStateError,
 )
 
 __all__ = [
@@ -26,4 +28,6 @@ __all__ = [
     "NamespaceException",
     "NetworkError",
     "QueryError",
+    "TransactionError",
+    "TransactionStateError",
 ]

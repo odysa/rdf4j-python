@@ -109,6 +109,7 @@ class SyncApiClient(BaseClient):
         content: str | bytes | None = None,
         json: Any | None = None,
         headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
     ) -> httpx.Response:
         """
         Sends a POST request.
@@ -118,13 +119,16 @@ class SyncApiClient(BaseClient):
             content (str | bytes | None): Raw content to include in the request body.
             json (Any | None): JSON-encoded body data.
             headers (dict[str, str] | None): Request headers.
+            params (dict[str, Any] | None): Query parameters.
 
         Returns:
             httpx.Response: The HTTP response.
         """
         url = self._build_url(path)
-        logger.debug("POST %s", url)
-        response = self.client.post(url, content=content, json=json, headers=headers)
+        logger.debug("POST %s params=%s", url, params)
+        response = self.client.post(
+            url, content=content, json=json, headers=headers, params=params
+        )
         logger.debug("Response %s: %s bytes", response.status_code, len(response.content))
         return response
 
@@ -251,6 +255,7 @@ class AsyncApiClient(BaseClient):
         content: str | bytes | None = None,
         json: Any | None = None,
         headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
     ) -> httpx.Response:
         """
         Sends an asynchronous POST request.
@@ -260,13 +265,16 @@ class AsyncApiClient(BaseClient):
             content (str | bytes | None): Raw content to include in the request body.
             json (Any | None): JSON-encoded body data.
             headers (dict[str, str] | None): Request headers.
+            params (dict[str, Any] | None): Query parameters.
 
         Returns:
             httpx.Response: The HTTP response.
         """
         url = self._build_url(path)
-        logger.debug("POST %s", url)
-        response = await self.client.post(url, content=content, json=json, headers=headers)
+        logger.debug("POST %s params=%s", url, params)
+        response = await self.client.post(
+            url, content=content, json=json, headers=headers, params=params
+        )
         logger.debug("Response %s: %s bytes", response.status_code, len(response.content))
         return response
 
