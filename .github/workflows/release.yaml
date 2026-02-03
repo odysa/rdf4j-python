@@ -1,20 +1,76 @@
-name: Python Publish
+name: Release
 
 on:
-  push:
-    tags:
-      - v*
+  workflow_dispatch:
+    inputs:
+      force_version:
+        description: 'Force specific version (e.g., 0.2.0). Leave empty for automatic bump.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
 
 jobs:
-  pypi:
-    name: Publish to PyPI
+  release:
+    name: Release
     runs-on: ubuntu-latest
     environment:
       name: release
-    permissions:
-      id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install python-semantic-release
+        run: pip install python-semantic-release
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version (automatic)
+        if: ${{ !inputs.force_version }}
+        run: |
+          semantic-release version --no-push --no-commit
+
+      - name: Bump version (forced)
+        if: ${{ inputs.force_version }}
+        run: |
+          sed -i 's/^version = ".*"/version = "${{ inputs.force_version }}"/' pyproject.toml
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep '^version' pyproject.toml | cut -d'"' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Commit and tag
+        run: |
+          git add pyproject.toml CHANGELOG.md 2>/dev/null || git add pyproject.toml
+          git commit -m "chore(release): bump version to ${{ steps.version.outputs.version }}" || echo "No changes to commit"
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
+          git push origin main --tags
+
       - uses: astral-sh/setup-uv@v3
-      - run: uv build
-      - run: uv publish --trusted-publishing always
+
+      - name: Build package
+        run: uv build
+
+      - name: Publish to PyPI
+        run: uv publish --trusted-publishing always
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: dist/*
