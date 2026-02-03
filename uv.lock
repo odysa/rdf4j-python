@@ -372,8 +372,7 @@ wheels = [
 
 [[package]]
 name = "rdf4j-python"
-version = "0.1.6"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "httpx" },
     { name = "pyoxigraph" },
