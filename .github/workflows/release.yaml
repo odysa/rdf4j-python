@@ -1,12 +1,9 @@
 name: Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      force_version:
-        description: 'Force specific version (e.g., 0.2.0). Leave empty for automatic bump.'
-        required: false
-        type: string
+  push:
+    tags:
+      - "v*"
 
 permissions:
   contents: write
@@ -24,46 +21,26 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+      - name: Get version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Install python-semantic-release
-        run: pip install python-semantic-release
+      - name: Update version in pyproject.toml
+        run: |
+          sed -i 's/^version = ".*"/version = "${{ steps.version.outputs.version }}"/' pyproject.toml
 
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Bump version (automatic)
-        if: ${{ !inputs.force_version }}
-        id: auto_version
+      - name: Commit version bump
         run: |
-          semantic-release version --no-push --no-commit
-          echo "version=$(grep '^version' pyproject.toml | cut -d'"' -f2)" >> $GITHUB_OUTPUT
-
-      - name: Bump version (forced)
-        if: ${{ inputs.force_version }}
-        id: forced_version
-        run: |
-          # Update version in pyproject.toml
-          sed -i 's/^version = ".*"/version = "${{ inputs.force_version }}"/' pyproject.toml
-          echo "version=${{ inputs.force_version }}" >> $GITHUB_OUTPUT
-
-      - name: Get version
-        id: version
-        run: |
-          VERSION=$(grep '^version' pyproject.toml | cut -d'"' -f2)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Commit and tag
-        run: |
-          git add pyproject.toml CHANGELOG.md 2>/dev/null || git add pyproject.toml
-          git commit -m "chore(release): bump version to ${{ steps.version.outputs.version }}" || echo "No changes to commit"
-          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
-          git push origin main --tags
+          git add pyproject.toml
+          git commit -m "chore(release): bump version to ${{ steps.version.outputs.version }}"
+          git push origin HEAD:main
 
       - uses: astral-sh/setup-uv@v3
 
