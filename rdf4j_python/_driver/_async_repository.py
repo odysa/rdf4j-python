@@ -7,6 +7,7 @@ import pyoxigraph as og
 
 from rdf4j_python._client import AsyncApiClient
 from rdf4j_python._driver._async_named_graph import AsyncNamedGraph
+from rdf4j_python._driver._async_transaction import AsyncTransaction, IsolationLevel
 from rdf4j_python.exception.repo_exception import (
     NamespaceException,
     RepositoryInternalException,
@@ -601,6 +602,38 @@ class AsyncRdf4JRepository:
             AsyncNamedGraph: A named graph object.
         """
         return AsyncNamedGraph(self._client, self._repository_id, graph)
+
+    def transaction(
+        self, isolation_level: Optional[IsolationLevel] = None
+    ) -> AsyncTransaction:
+        """Creates a new transaction for this repository.
+
+        Transactions allow grouping multiple operations (add, delete, update)
+        into a single atomic unit. Either all operations succeed (commit) or
+        none of them take effect (rollback).
+
+        Args:
+            isolation_level: Optional isolation level for the transaction.
+                Supported levels depend on the RDF4J store implementation.
+                Common levels include SNAPSHOT, SERIALIZABLE, READ_COMMITTED.
+
+        Returns:
+            AsyncTransaction: A transaction context manager.
+
+        Example:
+            ```python
+            # Using as context manager (recommended)
+            async with repo.transaction() as txn:
+                await txn.add_statements([quad1, quad2])
+                await txn.delete_statements([quad3])
+                # Auto-commits on success, auto-rollbacks on exception
+
+            # With isolation level
+            async with repo.transaction(IsolationLevel.SERIALIZABLE) as txn:
+                await txn.add_statements([quad1])
+            ```
+        """
+        return AsyncTransaction(self._client, self._repository_id, isolation_level)
 
     def _handle_repo_not_found_exception(self, response: httpx.Response) -> None:
         """Raises a RepositoryNotFoundException if response is 404.

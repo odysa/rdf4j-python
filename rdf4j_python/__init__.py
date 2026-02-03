@@ -2,7 +2,14 @@
 RDF4J Python is a Python library for interacting with RDF4J repositories.
 """
 
-from ._driver import AsyncNamedGraph, AsyncRdf4j, AsyncRdf4JRepository
+from ._driver import (
+    AsyncNamedGraph,
+    AsyncRdf4j,
+    AsyncRdf4JRepository,
+    AsyncTransaction,
+    IsolationLevel,
+    TransactionState,
+)
 from .exception import (
     NamespaceException,
     NetworkError,
@@ -14,6 +21,8 @@ from .exception import (
     RepositoryInternalException,
     RepositoryNotFoundException,
     RepositoryUpdateException,
+    TransactionError,
+    TransactionStateError,
 )
 from .model import (
     IRI,
@@ -37,6 +46,10 @@ __all__ = [
     "AsyncRdf4j",
     "AsyncRdf4JRepository",
     "AsyncNamedGraph",
+    # Transaction
+    "AsyncTransaction",
+    "IsolationLevel",
+    "TransactionState",
     # Exceptions
     "Rdf4jError",
     "RepositoryError",
@@ -48,6 +61,8 @@ __all__ = [
     "NamespaceException",
     "NetworkError",
     "QueryError",
+    "TransactionError",
+    "TransactionStateError",
     # Model types
     "Namespace",
     "RepositoryMetadata",

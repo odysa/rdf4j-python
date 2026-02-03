@@ -10,13 +10,12 @@
 
 rdf4j-python bridges the gap between Python and the robust [Eclipse RDF4J](https://rdf4j.org/) ecosystem, providing a clean, async-first API for managing RDF repositories, executing SPARQL queries, and handling semantic data with ease.
 
-> **Note:** This project is under active development. While stable for many use cases, interfaces may evolve. Feedback and contributions are welcome!
-
 ## Features
 
 - **Async-First Design**: Native support for async/await with synchronous fallback
 - **Repository Management**: Create, access, and manage RDF4J repositories programmatically
 - **SPARQL Support**: Execute SELECT, ASK, CONSTRUCT, and UPDATE queries effortlessly
+- **Transaction Support**: Atomic operations with commit/rollback and isolation levels
 - **Flexible Data Handling**: Add, retrieve, and manipulate RDF triples and quads
 - **File Upload**: Upload RDF files (Turtle, N-Triples, N-Quads, RDF/XML, JSON-LD, TriG, N3) directly to repositories
 - **Multiple Formats**: Support for various RDF serialization formats
@@ -28,7 +27,7 @@ rdf4j-python bridges the gap between Python and the robust [Eclipse RDF4J](https
 
 ### Prerequisites
 
-- Python 3.10 or higher
+- Python 3.11 or higher
 - RDF4J Server (for remote repositories) or embedded usage
 
 ### Install from PyPI
@@ -176,18 +175,45 @@ import pyoxigraph as og
 async def upload_example():
     async with AsyncRdf4j("http://localhost:19780/rdf4j-server") as db:
         repo = await db.get_repository("my-repo")
-        
+
         # Upload a Turtle file (format auto-detected from extension)
         await repo.upload_file("data.ttl")
-        
+
         # Upload to a specific named graph
         await repo.upload_file("data.ttl", context=IRI("http://example.com/graph"))
-        
+
         # Upload with explicit format
         await repo.upload_file("data.txt", rdf_format=og.RdfFormat.N_TRIPLES)
-        
+
         # Upload with base URI for relative URIs
         await repo.upload_file("data.ttl", base_uri="http://example.com/")
+```
+
+### Using Transactions
+
+```python
+from rdf4j_python import IsolationLevel
+
+async def transaction_example():
+    async with AsyncRdf4j("http://localhost:19780/rdf4j-server") as db:
+        repo = await db.get_repository("my-repo")
+
+        # Atomic operations with auto-commit/rollback
+        async with repo.transaction() as txn:
+            await txn.add_statements([
+                Quad(IRI("http://example.com/alice"), IRI("http://xmlns.com/foaf/0.1/name"), Literal("Alice")),
+                Quad(IRI("http://example.com/bob"), IRI("http://xmlns.com/foaf/0.1/name"), Literal("Bob")),
+            ])
+            await txn.delete_statements([old_quad])
+            # Commits automatically on success, rolls back on exception
+
+        # With specific isolation level
+        async with repo.transaction(IsolationLevel.SERIALIZABLE) as txn:
+            await txn.update("""
+                DELETE { ?s <http://example.com/status> "draft" }
+                INSERT { ?s <http://example.com/status> "published" }
+                WHERE { ?s <http://example.com/status> "draft" }
+            """)
 ```
 
 For more detailed examples, see the [examples](examples/) directory.
