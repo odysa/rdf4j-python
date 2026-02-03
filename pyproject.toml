@@ -1,7 +1,7 @@
 [project]
 name = "rdf4j-python"
 authors = [{ name = "Chengxu Bian", email = "cbian564@gmail.com" }]
-version = "0.1.6"
+dynamic = ["version"]
 description = "The Python client for RDF4J"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -20,6 +20,16 @@ dev = [
 ]
 docs = ["furo>=2024.8.6", "sphinx>=8"]
 
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "rdf4j_python/_version.py"
 
 [tool.pytest.ini_options]
 log_cli = true

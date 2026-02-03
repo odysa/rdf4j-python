@@ -2,6 +2,11 @@
 RDF4J Python is a Python library for interacting with RDF4J repositories.
 """
 
+try:
+    from ._version import __version__
+except ImportError:
+    __version__ = "0.0.0.dev0"
+
 from ._driver import (
     AsyncNamedGraph,
     AsyncRdf4j,
@@ -42,6 +47,8 @@ from .model import (
 )
 
 __all__ = [
+    # Version
+    "__version__",
     # Main classes
     "AsyncRdf4j",
     "AsyncRdf4JRepository",
