@@ -1,7 +1,7 @@
 [project]
 name = "rdf4j-python"
 authors = [{ name = "Chengxu Bian", email = "cbian564@gmail.com" }]
-version = "0.1.6"
+version = "0.2.0"
 description = "The Python client for RDF4J"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -20,6 +20,19 @@ dev = [
 ]
 docs = ["furo>=2024.8.6", "sphinx>=8"]
 
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+branch = "main"
+commit_message = "chore(release): bump version to {version}"
+tag_format = "v{version}"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "style", "test"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+
+[tool.semantic_release.changelog]
+changelog_file = "CHANGELOG.md"
 
 [tool.pytest.ini_options]
 log_cli = true
