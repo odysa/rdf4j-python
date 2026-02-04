@@ -14,6 +14,7 @@ from .exception import (
     NamespaceException,
     NetworkError,
     QueryError,
+    QueryTypeMismatchError,
     Rdf4jError,
     RepositoryCreationException,
     RepositoryDeletionException,
@@ -35,8 +36,10 @@ from .model import (
     Predicate,
     Quad,
     QuadResultSet,
+    QueryBindings,
     RepositoryMetadata,
     Subject,
+    Term,
     Triple,
     Variable,
 )
@@ -61,6 +64,7 @@ __all__ = [
     "NamespaceException",
     "NetworkError",
     "QueryError",
+    "QueryTypeMismatchError",
     "TransactionError",
     "TransactionStateError",
     # Model types
@@ -77,5 +81,7 @@ __all__ = [
     "Predicate",
     "Object",
     "Context",
+    "Term",
+    "QueryBindings",
     "QuadResultSet",
 ]

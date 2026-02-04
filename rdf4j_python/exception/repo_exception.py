@@ -49,6 +49,27 @@ class QueryError(Rdf4jError):
     """Exception raised when a SPARQL query is invalid or fails."""
 
 
+class QueryTypeMismatchError(QueryError):
+    """Exception raised when query type doesn't match the method called.
+
+    For example, calling select() with an ASK query when strict=True.
+
+    Attributes:
+        expected: The expected query type (e.g., "SELECT").
+        actual: The detected query type (e.g., "ASK").
+        query: The original query string.
+    """
+
+    def __init__(self, expected: str, actual: str, query: str):
+        self.expected = expected
+        self.actual = actual
+        self.query = query
+        truncated = query[:100] + "..." if len(query) > 100 else query
+        super().__init__(
+            f"Expected {expected} query but detected {actual}. Query: {truncated}"
+        )
+
+
 class TransactionError(Rdf4jError):
     """Base exception for transaction-related errors."""
 

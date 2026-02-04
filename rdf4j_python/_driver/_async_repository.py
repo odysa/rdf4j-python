@@ -10,6 +10,8 @@ from rdf4j_python._driver._async_named_graph import AsyncNamedGraph
 from rdf4j_python._driver._async_transaction import AsyncTransaction, IsolationLevel
 from rdf4j_python.exception.repo_exception import (
     NamespaceException,
+    QueryError,
+    QueryTypeMismatchError,
     RepositoryInternalException,
     RepositoryNotFoundException,
     RepositoryUpdateException,
@@ -17,12 +19,16 @@ from rdf4j_python.exception.repo_exception import (
 from rdf4j_python.model import Namespace
 from rdf4j_python.model.term import (
     IRI,
+    BlankNode,
     Context,
+    Literal,
     Object,
     Predicate,
     Quad,
     QuadResultSet,
+    QueryBindings,
     Subject,
+    Term,
     Triple,
 )
 from rdf4j_python.utils.const import Rdf4jContentType
@@ -114,6 +120,64 @@ def _detect_query_type(query: str) -> str:
     return first_word
 
 
+def _serialize_binding_value(term: Term) -> str:
+    """Serialize an RDF term to N-Triples format for use in query bindings.
+
+    Args:
+        term: An RDF term (IRI, BlankNode, or Literal).
+
+    Returns:
+        str: N-Triples serialization of the term.
+
+    Raises:
+        TypeError: If the term type is not supported.
+    """
+    if isinstance(term, og.NamedNode):
+        return f"<{term.value}>"
+    elif isinstance(term, og.BlankNode):
+        return f"_:{term.value}"
+    elif isinstance(term, og.Literal):
+        # Escape special characters in the value
+        escaped = term.value.replace("\\", "\\\\").replace('"', '\\"')
+        if term.language:
+            return f'"{escaped}"@{term.language}'
+        elif term.datatype and term.datatype.value != "http://www.w3.org/2001/XMLSchema#string":
+            return f'"{escaped}"^^<{term.datatype.value}>'
+        else:
+            return f'"{escaped}"'
+    else:
+        raise TypeError(f"Unsupported term type: {type(term)}")
+
+
+def _build_query_params(
+    query: str,
+    infer: bool,
+    bindings: Optional[QueryBindings] = None,
+) -> dict[str, str]:
+    """Build query parameters for a SPARQL query request.
+
+    Args:
+        query: The SPARQL query string.
+        infer: Whether to include inferred statements.
+        bindings: Optional variable bindings.
+
+    Returns:
+        dict: Query parameters for the HTTP request.
+    """
+    params: dict[str, str] = {
+        "query": query,
+        "infer": str(infer).lower(),
+    }
+
+    if bindings:
+        for var_name, term in bindings.items():
+            # Variable names should not include the ? prefix
+            clean_name = var_name.lstrip("?")
+            params[f"${clean_name}"] = _serialize_binding_value(term)
+
+    return params
+
+
 class AsyncRdf4JRepository:
     """Asynchronous interface for interacting with an RDF4J repository."""
 
@@ -148,26 +212,236 @@ class AsyncRdf4JRepository:
             )
         return self._sparql_wrapper
 
+    async def select(
+        self,
+        query: str,
+        infer: bool = True,
+        bindings: Optional[QueryBindings] = None,
+        strict: bool = False,
+    ) -> og.QuerySolutions:
+        """Execute a SPARQL SELECT query.
+
+        Args:
+            query: The SPARQL SELECT query string.
+            infer: Whether to include inferred statements. Defaults to True.
+            bindings: Optional variable bindings to substitute in the query.
+                Keys are variable names (without ?), values are RDF terms.
+            strict: If True, validate that query is a SELECT before execution.
+
+        Returns:
+            QuerySolutions: Iterator of query solution mappings.
+
+        Raises:
+            QueryTypeMismatchError: If strict=True and query is not SELECT.
+            QueryError: If the query is malformed or execution fails.
+            RepositoryNotFoundException: If the repository doesn't exist.
+
+        Example:
+            >>> result = await repo.select(
+            ...     "SELECT ?name WHERE { ?person ex:name ?name }",
+            ...     bindings={"person": IRI("http://example.org/alice")}
+            ... )
+            >>> for solution in result:
+            ...     print(solution["name"].value)
+        """
+        if strict:
+            detected = _detect_query_type(query)
+            if detected != "SELECT":
+                raise QueryTypeMismatchError("SELECT", detected or "UNKNOWN", query)
+
+        path = f"/repositories/{self._repository_id}"
+        params = _build_query_params(query, infer, bindings)
+        headers = {"Accept": Rdf4jContentType.SPARQL_RESULTS_JSON}
+
+        response = await self._client.get(path, params=params, headers=headers)
+        self._handle_repo_not_found_exception(response)
+
+        if response.status_code != httpx.codes.OK:
+            raise QueryError(f"Query failed: {response.status_code} - {response.text}")
+
+        result = og.parse_query_results(response.text, format=og.QueryResultsFormat.JSON)
+        if not isinstance(result, og.QuerySolutions):
+            raise QueryError(f"Expected QuerySolutions but got {type(result).__name__}")
+
+        return result
+
+    async def ask(
+        self,
+        query: str,
+        infer: bool = True,
+        bindings: Optional[QueryBindings] = None,
+        strict: bool = False,
+    ) -> bool:
+        """Execute a SPARQL ASK query.
+
+        Args:
+            query: The SPARQL ASK query string.
+            infer: Whether to include inferred statements. Defaults to True.
+            bindings: Optional variable bindings to substitute in the query.
+            strict: If True, validate that query is an ASK before execution.
+
+        Returns:
+            bool: True if the query pattern has at least one match, False otherwise.
+
+        Raises:
+            QueryTypeMismatchError: If strict=True and query is not ASK.
+            QueryError: If the query is malformed or execution fails.
+            RepositoryNotFoundException: If the repository doesn't exist.
+
+        Example:
+            >>> exists = await repo.ask("ASK { <http://example.org/alice> ?p ?o }")
+            >>> if exists:
+            ...     print("Alice exists in the repository")
+        """
+        if strict:
+            detected = _detect_query_type(query)
+            if detected != "ASK":
+                raise QueryTypeMismatchError("ASK", detected or "UNKNOWN", query)
+
+        path = f"/repositories/{self._repository_id}"
+        params = _build_query_params(query, infer, bindings)
+        headers = {"Accept": Rdf4jContentType.SPARQL_RESULTS_JSON}
+
+        response = await self._client.get(path, params=params, headers=headers)
+        self._handle_repo_not_found_exception(response)
+
+        if response.status_code != httpx.codes.OK:
+            raise QueryError(f"Query failed: {response.status_code} - {response.text}")
+
+        result = og.parse_query_results(response.text, format=og.QueryResultsFormat.JSON)
+        if not isinstance(result, og.QueryBoolean):
+            raise QueryError(f"Expected QueryBoolean but got {type(result).__name__}")
+
+        return bool(result)
+
+    async def construct(
+        self,
+        query: str,
+        infer: bool = True,
+        bindings: Optional[QueryBindings] = None,
+        strict: bool = False,
+    ) -> og.QueryTriples:
+        """Execute a SPARQL CONSTRUCT query.
+
+        Args:
+            query: The SPARQL CONSTRUCT query string.
+            infer: Whether to include inferred statements. Defaults to True.
+            bindings: Optional variable bindings to substitute in the query.
+            strict: If True, validate that query is CONSTRUCT before execution.
+
+        Returns:
+            QueryTriples: Iterator of constructed RDF triples.
+
+        Raises:
+            QueryTypeMismatchError: If strict=True and query is not CONSTRUCT.
+            QueryError: If the query is malformed or execution fails.
+            RepositoryNotFoundException: If the repository doesn't exist.
+
+        Example:
+            >>> triples = await repo.construct('''
+            ...     CONSTRUCT { ?s ex:newProp ?o }
+            ...     WHERE { ?s ex:oldProp ?o }
+            ... ''')
+            >>> for triple in triples:
+            ...     print(f"{triple.subject} {triple.predicate} {triple.object}")
+        """
+        if strict:
+            detected = _detect_query_type(query)
+            if detected != "CONSTRUCT":
+                raise QueryTypeMismatchError("CONSTRUCT", detected or "UNKNOWN", query)
+
+        path = f"/repositories/{self._repository_id}"
+        params = _build_query_params(query, infer, bindings)
+        headers = {"Accept": Rdf4jContentType.NTRIPLES}
+
+        response = await self._client.get(path, params=params, headers=headers)
+        self._handle_repo_not_found_exception(response)
+
+        if response.status_code != httpx.codes.OK:
+            raise QueryError(f"Query failed: {response.status_code} - {response.text}")
+
+        # Parse N-Triples response and convert to QueryTriples
+        store = og.Store()
+        for quad in og.parse(response.text, format=og.RdfFormat.N_TRIPLES):
+            store.add(quad)
+        return store.query("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }")
+
+    async def describe(
+        self,
+        query: str,
+        infer: bool = True,
+        bindings: Optional[QueryBindings] = None,
+        strict: bool = False,
+    ) -> og.QueryTriples:
+        """Execute a SPARQL DESCRIBE query.
+
+        Args:
+            query: The SPARQL DESCRIBE query string.
+            infer: Whether to include inferred statements. Defaults to True.
+            bindings: Optional variable bindings to substitute in the query.
+            strict: If True, validate that query is DESCRIBE before execution.
+
+        Returns:
+            QueryTriples: Iterator of RDF triples describing the resource(s).
+
+        Raises:
+            QueryTypeMismatchError: If strict=True and query is not DESCRIBE.
+            QueryError: If the query is malformed or execution fails.
+            RepositoryNotFoundException: If the repository doesn't exist.
+
+        Example:
+            >>> triples = await repo.describe("DESCRIBE <http://example.org/alice>")
+            >>> for triple in triples:
+            ...     print(f"  {triple.predicate}: {triple.object}")
+        """
+        if strict:
+            detected = _detect_query_type(query)
+            if detected != "DESCRIBE":
+                raise QueryTypeMismatchError("DESCRIBE", detected or "UNKNOWN", query)
+
+        path = f"/repositories/{self._repository_id}"
+        params = _build_query_params(query, infer, bindings)
+        headers = {"Accept": Rdf4jContentType.NTRIPLES}
+
+        response = await self._client.get(path, params=params, headers=headers)
+        self._handle_repo_not_found_exception(response)
+
+        if response.status_code != httpx.codes.OK:
+            raise QueryError(f"Query failed: {response.status_code} - {response.text}")
+
+        # Parse N-Triples response and convert to QueryTriples
+        store = og.Store()
+        for quad in og.parse(response.text, format=og.RdfFormat.N_TRIPLES):
+            store.add(quad)
+        return store.query("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }")
+
     async def query(
         self,
         sparql_query: str,
         infer: bool = True,
+        bindings: Optional[QueryBindings] = None,
     ) -> og.QuerySolutions | og.QueryBoolean | og.QueryTriples:
         """Executes a SPARQL query (SELECT, ASK, CONSTRUCT, or DESCRIBE).
 
+        This is a generic query method that auto-detects the query type.
+        For better type safety, consider using the specific methods:
+        select(), ask(), construct(), or describe().
+
         Args:
-            sparql_query (str): The SPARQL query string.
-            infer (bool): Whether to include inferred statements. Defaults to True.
+            sparql_query: The SPARQL query string.
+            infer: Whether to include inferred statements. Defaults to True.
+            bindings: Optional variable bindings to substitute in the query.
+                Keys are variable names (without ?), values are RDF terms.
 
         Returns:
-            og.QuerySolutions | og.QueryBoolean | og.QueryTriples: Parsed query results.
+            QuerySolutions | QueryBoolean | QueryTriples: Parsed query results.
 
         Note:
             This method correctly handles queries with PREFIX declarations,
             BASE URIs, and comments before the query keyword.
         """
         path = f"/repositories/{self._repository_id}"
-        params = {"query": sparql_query, "infer": str(infer).lower()}
+        params = _build_query_params(sparql_query, infer, bindings)
 
         # Detect query type (handles PREFIX, BASE, comments)
         query_type = _detect_query_type(sparql_query)
@@ -205,23 +479,42 @@ class AsyncRdf4JRepository:
             )
 
     async def update(
-        self, sparql_update_query: str, content_type: Rdf4jContentType
+        self,
+        sparql_update: str,
+        bindings: Optional[QueryBindings] = None,
     ) -> None:
         """Executes a SPARQL UPDATE command.
 
         Args:
-            sparql_update (str): The SPARQL update string.
+            sparql_update: The SPARQL update string (INSERT, DELETE, CLEAR, etc.).
+            bindings: Optional variable bindings for parameterized updates.
+                Keys are variable names (without ?), values are RDF terms.
 
         Raises:
             RepositoryNotFoundException: If the repository doesn't exist.
-            httpx.HTTPStatusError: If the update fails.
+            RepositoryUpdateException: If the update fails.
+
+        Example:
+            >>> await repo.update('''
+            ...     PREFIX ex: <http://example.org/>
+            ...     INSERT DATA { ex:alice ex:age 30 }
+            ... ''')
         """
         # SPARQL UPDATE operations return HTTP 204 No Content on success.
         # No result data is returned as per SPARQL 1.1 UPDATE specification.
         path = f"/repositories/{self._repository_id}/statements"
-        headers = {"Content-Type": content_type}
+        headers: dict[str, str] = {"Content-Type": Rdf4jContentType.SPARQL_UPDATE}
+
+        # Build params for bindings if provided
+        params: Optional[dict[str, str]] = None
+        if bindings:
+            params = {}
+            for var_name, term in bindings.items():
+                clean_name = var_name.lstrip("?")
+                params[f"${clean_name}"] = _serialize_binding_value(term)
+
         response = await self._client.post(
-            path, content=sparql_update_query, headers=headers
+            path, content=sparql_update, headers=headers, params=params
         )
         self._handle_repo_not_found_exception(response)
         if response.status_code != httpx.codes.NO_CONTENT:

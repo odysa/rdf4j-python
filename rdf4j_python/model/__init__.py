@@ -14,7 +14,9 @@ from .term import (
     Predicate,
     Quad,
     QuadResultSet,
+    QueryBindings,
     Subject,
+    Term,
     Triple,
     Variable,
 )
@@ -33,5 +35,7 @@ __all__ = [
     "Predicate",
     "Object",
     "Context",
+    "Term",
+    "QueryBindings",
     "QuadResultSet",
 ]
