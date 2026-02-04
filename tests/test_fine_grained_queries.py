@@ -301,3 +301,274 @@ class TestQueryTypeMismatchError:
         long_query = "SELECT * WHERE { " + "?s ?p ?o . " * 50 + "}"
         error = QueryTypeMismatchError("ASK", "SELECT", long_query)
         assert "..." in str(error)
+
+
+class TestStrictModeMismatch:
+    """Comprehensive tests for strict mode query type mismatch detection."""
+
+    # SELECT method with wrong query types
+    @pytest.mark.asyncio
+    async def test_select_with_ask_query(self, sample_repo):
+        """Test SELECT rejects ASK query in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.select("ASK { ?s ?p ?o }", strict=True)
+        assert exc.value.expected == "SELECT"
+        assert exc.value.actual == "ASK"
+
+    @pytest.mark.asyncio
+    async def test_select_with_construct_query(self, sample_repo):
+        """Test SELECT rejects CONSTRUCT query in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.select(
+                "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }", strict=True
+            )
+        assert exc.value.expected == "SELECT"
+        assert exc.value.actual == "CONSTRUCT"
+
+    @pytest.mark.asyncio
+    async def test_select_with_describe_query(self, sample_repo):
+        """Test SELECT rejects DESCRIBE query in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.select(
+                "DESCRIBE <http://example.org/alice>", strict=True
+            )
+        assert exc.value.expected == "SELECT"
+        assert exc.value.actual == "DESCRIBE"
+
+    # ASK method with wrong query types
+    @pytest.mark.asyncio
+    async def test_ask_with_select_query(self, sample_repo):
+        """Test ASK rejects SELECT query in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.ask("SELECT * WHERE { ?s ?p ?o }", strict=True)
+        assert exc.value.expected == "ASK"
+        assert exc.value.actual == "SELECT"
+
+    @pytest.mark.asyncio
+    async def test_ask_with_construct_query(self, sample_repo):
+        """Test ASK rejects CONSTRUCT query in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.ask(
+                "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }", strict=True
+            )
+        assert exc.value.expected == "ASK"
+        assert exc.value.actual == "CONSTRUCT"
+
+    @pytest.mark.asyncio
+    async def test_ask_with_describe_query(self, sample_repo):
+        """Test ASK rejects DESCRIBE query in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.ask(
+                "DESCRIBE <http://example.org/alice>", strict=True
+            )
+        assert exc.value.expected == "ASK"
+        assert exc.value.actual == "DESCRIBE"
+
+    # CONSTRUCT method with wrong query types
+    @pytest.mark.asyncio
+    async def test_construct_with_select_query(self, sample_repo):
+        """Test CONSTRUCT rejects SELECT query in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.construct("SELECT * WHERE { ?s ?p ?o }", strict=True)
+        assert exc.value.expected == "CONSTRUCT"
+        assert exc.value.actual == "SELECT"
+
+    @pytest.mark.asyncio
+    async def test_construct_with_ask_query(self, sample_repo):
+        """Test CONSTRUCT rejects ASK query in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.construct("ASK { ?s ?p ?o }", strict=True)
+        assert exc.value.expected == "CONSTRUCT"
+        assert exc.value.actual == "ASK"
+
+    @pytest.mark.asyncio
+    async def test_construct_with_describe_query(self, sample_repo):
+        """Test CONSTRUCT rejects DESCRIBE query in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.construct(
+                "DESCRIBE <http://example.org/alice>", strict=True
+            )
+        assert exc.value.expected == "CONSTRUCT"
+        assert exc.value.actual == "DESCRIBE"
+
+    # DESCRIBE method with wrong query types
+    @pytest.mark.asyncio
+    async def test_describe_with_select_query(self, sample_repo):
+        """Test DESCRIBE rejects SELECT query in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.describe("SELECT * WHERE { ?s ?p ?o }", strict=True)
+        assert exc.value.expected == "DESCRIBE"
+        assert exc.value.actual == "SELECT"
+
+    @pytest.mark.asyncio
+    async def test_describe_with_ask_query(self, sample_repo):
+        """Test DESCRIBE rejects ASK query in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.describe("ASK { ?s ?p ?o }", strict=True)
+        assert exc.value.expected == "DESCRIBE"
+        assert exc.value.actual == "ASK"
+
+    @pytest.mark.asyncio
+    async def test_describe_with_construct_query(self, sample_repo):
+        """Test DESCRIBE rejects CONSTRUCT query in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.describe(
+                "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }", strict=True
+            )
+        assert exc.value.expected == "DESCRIBE"
+        assert exc.value.actual == "CONSTRUCT"
+
+    # Test with PREFIX declarations
+    @pytest.mark.asyncio
+    async def test_mismatch_with_prefix(self, sample_repo):
+        """Test mismatch detection works with PREFIX declarations."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.select(
+                "PREFIX ex: <http://example.org/> ASK { ?s ex:name ?o }",
+                strict=True,
+            )
+        assert exc.value.expected == "SELECT"
+        assert exc.value.actual == "ASK"
+
+
+class TestStrictModeBlocksUpdateQueries:
+    """Tests that strict mode blocks INSERT/DELETE queries on read methods.
+
+    This ensures that SPARQL UPDATE queries cannot accidentally be sent
+    to read query endpoints when strict validation is enabled.
+    """
+
+    # SELECT should block INSERT/DELETE
+    @pytest.mark.asyncio
+    async def test_select_blocks_insert_data(self, sample_repo):
+        """Test SELECT rejects INSERT DATA in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.select(
+                "INSERT DATA { <http://example.org/s> <http://example.org/p> <http://example.org/o> }",
+                strict=True,
+            )
+        assert exc.value.expected == "SELECT"
+        assert exc.value.actual == "INSERT"
+
+    @pytest.mark.asyncio
+    async def test_select_blocks_delete_data(self, sample_repo):
+        """Test SELECT rejects DELETE DATA in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.select(
+                "DELETE DATA { <http://example.org/s> <http://example.org/p> <http://example.org/o> }",
+                strict=True,
+            )
+        assert exc.value.expected == "SELECT"
+        assert exc.value.actual == "DELETE"
+
+    @pytest.mark.asyncio
+    async def test_select_blocks_delete_insert_where(self, sample_repo):
+        """Test SELECT rejects DELETE/INSERT WHERE in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.select(
+                "DELETE { ?s ?p ?o } INSERT { ?s ?p 'new' } WHERE { ?s ?p ?o }",
+                strict=True,
+            )
+        assert exc.value.expected == "SELECT"
+        assert exc.value.actual == "DELETE"
+
+    # ASK should block INSERT/DELETE
+    @pytest.mark.asyncio
+    async def test_ask_blocks_insert_data(self, sample_repo):
+        """Test ASK rejects INSERT DATA in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.ask(
+                "INSERT DATA { <http://example.org/s> <http://example.org/p> <http://example.org/o> }",
+                strict=True,
+            )
+        assert exc.value.expected == "ASK"
+        assert exc.value.actual == "INSERT"
+
+    @pytest.mark.asyncio
+    async def test_ask_blocks_delete_where(self, sample_repo):
+        """Test ASK rejects DELETE WHERE in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.ask(
+                "DELETE WHERE { ?s <http://example.org/obsolete> ?o }",
+                strict=True,
+            )
+        assert exc.value.expected == "ASK"
+        assert exc.value.actual == "DELETE"
+
+    # CONSTRUCT should block INSERT/DELETE
+    @pytest.mark.asyncio
+    async def test_construct_blocks_insert_data(self, sample_repo):
+        """Test CONSTRUCT rejects INSERT DATA in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.construct(
+                "INSERT DATA { <http://example.org/s> <http://example.org/p> <http://example.org/o> }",
+                strict=True,
+            )
+        assert exc.value.expected == "CONSTRUCT"
+        assert exc.value.actual == "INSERT"
+
+    @pytest.mark.asyncio
+    async def test_construct_blocks_delete_data(self, sample_repo):
+        """Test CONSTRUCT rejects DELETE DATA in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.construct(
+                "DELETE DATA { <http://example.org/s> <http://example.org/p> <http://example.org/o> }",
+                strict=True,
+            )
+        assert exc.value.expected == "CONSTRUCT"
+        assert exc.value.actual == "DELETE"
+
+    # DESCRIBE should block INSERT/DELETE
+    @pytest.mark.asyncio
+    async def test_describe_blocks_insert_data(self, sample_repo):
+        """Test DESCRIBE rejects INSERT DATA in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.describe(
+                "INSERT DATA { <http://example.org/s> <http://example.org/p> <http://example.org/o> }",
+                strict=True,
+            )
+        assert exc.value.expected == "DESCRIBE"
+        assert exc.value.actual == "INSERT"
+
+    @pytest.mark.asyncio
+    async def test_describe_blocks_delete_data(self, sample_repo):
+        """Test DESCRIBE rejects DELETE DATA in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.describe(
+                "DELETE DATA { <http://example.org/s> <http://example.org/p> <http://example.org/o> }",
+                strict=True,
+            )
+        assert exc.value.expected == "DESCRIBE"
+        assert exc.value.actual == "DELETE"
+
+    # Test with PREFIX declarations
+    @pytest.mark.asyncio
+    async def test_select_blocks_prefixed_insert(self, sample_repo):
+        """Test SELECT rejects INSERT with PREFIX in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.select(
+                "PREFIX ex: <http://example.org/> INSERT DATA { ex:s ex:p ex:o }",
+                strict=True,
+            )
+        assert exc.value.expected == "SELECT"
+        assert exc.value.actual == "INSERT"
+
+    # Test CLEAR and DROP (other UPDATE operations)
+    @pytest.mark.asyncio
+    async def test_select_blocks_clear(self, sample_repo):
+        """Test SELECT rejects CLEAR in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.select("CLEAR ALL", strict=True)
+        assert exc.value.expected == "SELECT"
+        assert exc.value.actual == "CLEAR"
+
+    @pytest.mark.asyncio
+    async def test_select_blocks_drop(self, sample_repo):
+        """Test SELECT rejects DROP in strict mode."""
+        with pytest.raises(QueryTypeMismatchError) as exc:
+            await sample_repo.select(
+                "DROP GRAPH <http://example.org/graph>",
+                strict=True,
+            )
+        assert exc.value.expected == "SELECT"
+        assert exc.value.actual == "DROP"
