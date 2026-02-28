@@ -13,13 +13,17 @@ This serves as a comprehensive example showing the full lifecycle.
 
 import asyncio
 
-from rdf4j_python import AsyncRdf4j
+from rdf4j_python import AsyncRdf4j, select
+from rdf4j_python.model._namespace import Namespace
 from rdf4j_python.model.repository_config import (
     MemoryStoreConfig,
     RepositoryConfig,
     SailRepositoryConfig,
 )
 from rdf4j_python.model.term import IRI, Literal, Quad
+
+# Define namespaces for query building
+ecom = Namespace("ecom", "http://example.com/")
 
 
 async def workflow_step_1_create_repositories():
@@ -199,14 +203,14 @@ async def workflow_step_3_query_data():
         # Query 1: Customer information
         print("👥 Customer Information:")
         customer_repo = await db.get_repository("customer-data")
-        customer_query = """
-        SELECT ?customer ?name ?email ?age WHERE {
-            ?customer <http://example.com/name> ?name .
-            OPTIONAL { ?customer <http://example.com/email> ?email }
-            OPTIONAL { ?customer <http://example.com/age> ?age }
-        }
-        ORDER BY ?name
-        """
+        customer_query = (
+            select("?customer", "?name", "?email", "?age")
+            .where("?customer", ecom.name, "?name")
+            .optional("?customer", ecom.email, "?email")
+            .optional("?customer", ecom.age, "?age")
+            .order_by("?name")
+            .build()
+        )
         customer_results = await customer_repo.query(customer_query)
         for result in customer_results:
             name = result["name"].value if result["name"] else "N/A"
@@ -217,14 +221,14 @@ async def workflow_step_3_query_data():
         # Query 2: Product catalog
         print("\n🛍️  Product Catalog:")
         product_repo = await db.get_repository("product-catalog")
-        product_query = """
-        SELECT ?product ?name ?price ?category WHERE {
-            ?product <http://example.com/name> ?name .
-            OPTIONAL { ?product <http://example.com/price> ?price }
-            OPTIONAL { ?product <http://example.com/category> ?category }
-        }
-        ORDER BY ?price
-        """
+        product_query = (
+            select("?product", "?name", "?price", "?category")
+            .where("?product", ecom.name, "?name")
+            .optional("?product", ecom.price, "?price")
+            .optional("?product", ecom.category, "?category")
+            .order_by("?price")
+            .build()
+        )
         product_results = await product_repo.query(product_query)
         for result in product_results:
             name = result["name"].value if result["name"] else "N/A"
@@ -235,14 +239,14 @@ async def workflow_step_3_query_data():
         # Query 3: Purchase analytics
         print("\n📊 Purchase Analytics:")
         analytics_repo = await db.get_repository("analytics-data")
-        analytics_query = """
-        SELECT ?purchase ?customer ?product ?date WHERE {
-            ?purchase <http://example.com/customer> ?customer .
-            ?purchase <http://example.com/product> ?product .
-            OPTIONAL { ?purchase <http://example.com/date> ?date }
-        }
-        ORDER BY ?date
-        """
+        analytics_query = (
+            select("?purchase", "?customer", "?product", "?date")
+            .where("?purchase", ecom.customer, "?customer")
+            .where("?purchase", ecom.product, "?product")
+            .optional("?purchase", ecom.date, "?date")
+            .order_by("?date")
+            .build()
+        )
         analytics_results = await analytics_repo.query(analytics_query)
         for result in analytics_results:
             customer = result["customer"].value if result["customer"] else "N/A"

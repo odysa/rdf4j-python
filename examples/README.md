@@ -74,7 +74,7 @@ python examples/delete_repository.py
 ### 🔍 Data Querying Examples
 
 #### `query_and_print.py`
-Comprehensive example of SPARQL querying and result formatting:
+Comprehensive example of SPARQL querying and result formatting using the fluent query builder:
 - SELECT queries with various clauses (FILTER, OPTIONAL, JOIN)
 - CONSTRUCT queries for data transformation
 - ASK queries for boolean checks
@@ -82,6 +82,7 @@ Comprehensive example of SPARQL querying and result formatting:
 - Multiple result formatting options
 
 **Key Features:**
+- Fluent SPARQL query builder (no raw query strings)
 - Automatic test data setup
 - Formatted table output
 - JSON-like result formatting
@@ -92,8 +93,8 @@ Comprehensive example of SPARQL querying and result formatting:
 python examples/query_and_print.py
 ```
 
-#### `query.py` (Original)
-Simple query example showing basic SPARQL execution.
+#### `query.py`
+Simple query example showing basic SPARQL execution using the query builder.
 
 **Usage:**
 ```bash
@@ -112,6 +113,7 @@ End-to-end example demonstrating the full repository lifecycle:
 
 **Key Features:**
 - Multi-repository workflow
+- Fluent SPARQL query builder with Namespace objects
 - Real-world data scenarios (customers, products, analytics)
 - Named graph usage
 - Comprehensive error handling and cleanup
@@ -121,7 +123,7 @@ End-to-end example demonstrating the full repository lifecycle:
 python examples/complete_workflow.py
 ```
 
-#### `repo.py` (Original)
+#### `repo.py`
 Basic repository creation and data insertion example.
 
 **Usage:**
