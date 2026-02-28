@@ -40,6 +40,7 @@ from .model import (
     Triple,
     Variable,
 )
+from .query import GraphPattern, ask, construct, describe, select
 
 __all__ = [
     # Main classes
@@ -78,4 +79,10 @@ __all__ = [
     "Object",
     "Context",
     "QuadResultSet",
+    # Query builder
+    "select",
+    "ask",
+    "construct",
+    "describe",
+    "GraphPattern",
 ]
