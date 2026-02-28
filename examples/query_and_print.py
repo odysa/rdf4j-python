@@ -12,7 +12,7 @@ from typing import Any
 
 from pyoxigraph import QuerySolutions, QueryTriples
 
-from rdf4j_python import AsyncRdf4j, GraphPattern, ask, construct, select
+from rdf4j_python import AsyncRdf4j, ask, construct, select
 from rdf4j_python.model._namespace import Namespace
 from rdf4j_python.model.repository_config import (
     MemoryStoreConfig,
