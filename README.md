@@ -15,6 +15,7 @@ rdf4j-python bridges the gap between Python and the robust [Eclipse RDF4J](https
 - **Async-First Design**: Native support for async/await with synchronous fallback
 - **Repository Management**: Create, access, and manage RDF4J repositories programmatically
 - **SPARQL Support**: Execute SELECT, ASK, CONSTRUCT, and UPDATE queries effortlessly
+- **SPARQL Query Builder**: Fluent, programmatic query construction with method chaining
 - **Transaction Support**: Atomic operations with commit/rollback and isolation levels
 - **Flexible Data Handling**: Add, retrieve, and manipulate RDF triples and quads
 - **File Upload**: Upload RDF files (Turtle, N-Triples, N-Quads, RDF/XML, JSON-LD, TriG, N3) directly to repositories
@@ -88,6 +89,62 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+### SPARQL Query Builder
+
+Build queries programmatically with method chaining instead of writing raw SPARQL strings:
+
+```python
+from rdf4j_python import select, ask, construct, describe, GraphPattern, Namespace
+
+ex = Namespace("ex", "http://example.org/")
+foaf = Namespace("foaf", "http://xmlns.com/foaf/0.1/")
+
+# SELECT with typed terms — IRIs serialize automatically
+query = (
+    select("?person", "?name")
+    .where("?person", foaf.type, ex.Person)
+    .where("?person", foaf.name, "?name")
+    .optional("?person", foaf.email, "?email")
+    .filter("?name != 'Bob'")
+    .order_by("?name")
+    .limit(10)
+    .build()
+)
+
+# Or use string-based prefixed names
+query = (
+    select("?name")
+    .prefix("foaf", "http://xmlns.com/foaf/0.1/")
+    .where("?person", "a", "foaf:Person")
+    .where("?person", "foaf:name", "?name")
+    .build()
+)
+
+# GROUP BY with aggregation
+query = (
+    select("?city", "(COUNT(?person) AS ?count)")
+    .where("?person", ex.city, "?city")
+    .group_by("?city")
+    .having("COUNT(?person) > 1")
+    .order_by("DESC(?count)")
+    .build()
+)
+
+# ASK, CONSTRUCT, and DESCRIBE
+ask_query = ask().where("?s", ex.name, "?name").build()
+
+construct_query = (
+    construct(("?s", ex.fullName, "?name"))
+    .where("?s", ex.firstName, "?fname")
+    .bind("CONCAT(?fname, ' ', ?lname)", "?name")
+    .build()
+)
+
+describe_query = describe(ex.alice).build()
+```
+
+The query builder supports FILTER, OPTIONAL, UNION, BIND, VALUES, sub-queries, DISTINCT, ORDER BY, GROUP BY, HAVING, LIMIT, and OFFSET. Both raw strings and typed objects (`IRI`, `Variable`, `Literal`, `Namespace`) work as terms.
+
 ### Working with Multiple Graphs
 
 ```python
@@ -155,15 +212,18 @@ async def advanced_example():
         ]
         await repo.add_statements(statements)
         
-        # Complex SPARQL query
-        query = """
-        PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-        SELECT ?name ?email WHERE {
-            ?person foaf:name ?name .
-            OPTIONAL { ?person foaf:email ?email }
-        }
-        ORDER BY ?name
-        """
+        # Query with the fluent query builder
+        from rdf4j_python import select
+        from rdf4j_python.model._namespace import Namespace
+
+        foaf = Namespace("foaf", "http://xmlns.com/foaf/0.1/")
+        query = (
+            select("?name", "?email")
+            .where("?person", foaf.name, "?name")
+            .optional("?person", foaf.email, "?email")
+            .order_by("?name")
+            .build()
+        )
         results = await repo.query(query)
 ```
 
@@ -256,6 +316,7 @@ For more detailed examples, see the [examples](examples/) directory.
 rdf4j_python/
 ├── _driver/          # Core async driver implementation
 ├── model/            # Data models and configurations
+├── query/            # SPARQL query builder
 ├── exception/        # Custom exceptions
 └── utils/           # Utility functions
 

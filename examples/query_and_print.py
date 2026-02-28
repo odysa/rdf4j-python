@@ -3,6 +3,8 @@ Example: Querying RDF4J Repositories and Printing Results
 
 This example demonstrates how to execute various types of SPARQL queries
 against RDF4J repositories and format the results in different ways.
+
+Queries are built using the fluent SPARQL query builder.
 """
 
 import asyncio
@@ -10,13 +12,17 @@ from typing import Any
 
 from pyoxigraph import QuerySolutions, QueryTriples
 
-from rdf4j_python import AsyncRdf4j
+from rdf4j_python import AsyncRdf4j, GraphPattern, ask, construct, select
+from rdf4j_python.model._namespace import Namespace
 from rdf4j_python.model.repository_config import (
     MemoryStoreConfig,
     RepositoryConfig,
     SailRepositoryConfig,
 )
 from rdf4j_python.model.term import IRI, Literal, Quad
+
+# Define namespaces for query building
+ex = Namespace("ex", "http://example.org/")
 
 
 async def setup_test_data(repo):
@@ -189,43 +195,43 @@ async def execute_select_queries(repo):
     print("=" * 50)
 
     # Query 1: Simple SELECT - get all people and their names
-    query1 = """
-    SELECT ?person ?name WHERE {
-        ?person <http://example.org/name> ?name .
-    }
-    """
+    query1 = (
+        select("?person", "?name")
+        .where("?person", ex.name, "?name")
+        .build()
+    )
     result1 = await repo.query(query1)
     print_select_results(result1, "All People and Their Names")
 
     # Query 2: SELECT with FILTER - people older than 30
-    query2 = """
-    SELECT ?person ?name ?age WHERE {
-        ?person <http://example.org/name> ?name .
-        ?person <http://example.org/age> ?age .
-        FILTER(?age > 30)
-    }
-    """
+    query2 = (
+        select("?person", "?name", "?age")
+        .where("?person", ex.name, "?name")
+        .where("?person", ex.age, "?age")
+        .filter("?age > 30")
+        .build()
+    )
     result2 = await repo.query(query2)
     print_select_results(result2, "People Older Than 30")
 
     # Query 3: SELECT with OPTIONAL - people and their email (if available)
-    query3 = """
-    SELECT ?person ?name ?email WHERE {
-        ?person <http://example.org/name> ?name .
-        OPTIONAL { ?person <http://example.org/email> ?email }
-    }
-    """
+    query3 = (
+        select("?person", "?name", "?email")
+        .where("?person", ex.name, "?name")
+        .optional("?person", ex.email, "?email")
+        .build()
+    )
     result3 = await repo.query(query3)
     print_select_results(result3, "People and Their Email Addresses")
 
     # Query 4: SELECT with JOIN - people and their employers
-    query4 = """
-    SELECT ?person ?name ?company WHERE {
-        ?person <http://example.org/name> ?name .
-        ?person <http://example.org/worksFor> ?org .
-        ?org <http://example.org/name> ?company .
-    }
-    """
+    query4 = (
+        select("?person", "?name", "?company")
+        .where("?person", ex.name, "?name")
+        .where("?person", ex.worksFor, "?org")
+        .where("?org", ex.name, "?company")
+        .build()
+    )
     result4 = await repo.query(query4)
     print_select_results(result4, "People and Their Employers")
 
@@ -239,29 +245,25 @@ async def execute_construct_queries(repo):
     print("=" * 50)
 
     # Query 1: CONSTRUCT - create simplified person data
-    query1 = """
-    CONSTRUCT {
-        ?person <http://example.org/hasName> ?name ;
-                <http://example.org/hasAge> ?age .
-    }
-    WHERE {
-        ?person <http://example.org/name> ?name .
-        ?person <http://example.org/age> ?age .
-    }
-    """
+    query1 = (
+        construct(
+            ("?person", ex.hasName, "?name"),
+            ("?person", ex.hasAge, "?age"),
+        )
+        .where("?person", ex.name, "?name")
+        .where("?person", ex.age, "?age")
+        .build()
+    )
     result1 = await repo.query(query1)
     print_construct_results(result1, "Simplified Person Data")
 
     # Query 2: CONSTRUCT - create employment relationships
-    query2 = """
-    CONSTRUCT {
-        ?person <http://example.org/employedBy> ?company .
-    }
-    WHERE {
-        ?person <http://example.org/worksFor> ?org .
-        ?org <http://example.org/name> ?company .
-    }
-    """
+    query2 = (
+        construct(("?person", ex.employedBy, "?company"))
+        .where("?person", ex.worksFor, "?org")
+        .where("?org", ex.name, "?company")
+        .build()
+    )
     result2 = await repo.query(query2)
     print_construct_results(result2, "Employment Relationships")
 
@@ -272,30 +274,30 @@ async def execute_ask_queries(repo):
     print("=" * 50)
 
     # Query 1: ASK - check if Alice exists
-    query1 = """
-    ASK {
-        ?person <http://example.org/name> "Alice" .
-    }
-    """
+    query1 = (
+        ask()
+        .where("?person", ex.name, '"Alice"')
+        .build()
+    )
     result1 = await repo.query(query1)
     print(f"Does Alice exist? {'✅ Yes' if result1 else '❌ No'}")
 
     # Query 2: ASK - check if anyone is older than 40
-    query2 = """
-    ASK {
-        ?person <http://example.org/age> ?age .
-        FILTER(?age > 40)
-    }
-    """
+    query2 = (
+        ask()
+        .where("?person", ex.age, "?age")
+        .filter("?age > 40")
+        .build()
+    )
     result2 = await repo.query(query2)
     print(f"Is anyone older than 40? {'✅ Yes' if result2 else '❌ No'}")
 
     # Query 3: ASK - check if there are any email addresses
-    query3 = """
-    ASK {
-        ?person <http://example.org/email> ?email .
-    }
-    """
+    query3 = (
+        ask()
+        .where("?person", ex.email, "?email")
+        .build()
+    )
     result3 = await repo.query(query3)
     print(f"Are there any email addresses? {'✅ Yes' if result3 else '❌ No'}")
 
@@ -306,29 +308,29 @@ async def execute_aggregate_queries(repo):
     print("=" * 50)
 
     # Query 1: COUNT - total number of people
-    query1 = """
-    SELECT (COUNT(?person) AS ?totalPeople) WHERE {
-        ?person <http://example.org/name> ?name .
-    }
-    """
+    query1 = (
+        select("(COUNT(?person) AS ?totalPeople)")
+        .where("?person", ex.name, "?name")
+        .build()
+    )
     result1 = await repo.query(query1)
     print_select_results(result1, "Total Number of People")
 
     # Query 2: AVG - average age
-    query2 = """
-    SELECT (AVG(?age) AS ?averageAge) WHERE {
-        ?person <http://example.org/age> ?age .
-    }
-    """
+    query2 = (
+        select("(AVG(?age) AS ?averageAge)")
+        .where("?person", ex.age, "?age")
+        .build()
+    )
     result2 = await repo.query(query2)
     print_select_results(result2, "Average Age")
 
     # Query 3: MIN/MAX - youngest and oldest person
-    query3 = """
-    SELECT (MIN(?age) AS ?minAge) (MAX(?age) AS ?maxAge) WHERE {
-        ?person <http://example.org/age> ?age .
-    }
-    """
+    query3 = (
+        select("(MIN(?age) AS ?minAge)", "(MAX(?age) AS ?maxAge)")
+        .where("?person", ex.age, "?age")
+        .build()
+    )
     result3 = await repo.query(query3)
     print_select_results(result3, "Age Range (Min/Max)")
 
