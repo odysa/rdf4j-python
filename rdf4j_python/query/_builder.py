@@ -11,13 +11,37 @@ from ._pattern import GraphPattern
 from ._term import Term, serialize_term
 
 
-# ── mixin for WHERE-clause delegation ────────────────────────────────
+class _QueryBase:
+    """Shared state and behaviour for all query builders.
 
+    Provides prefix management, WHERE-clause delegation, ``copy()``, and
+    ``__str__()`` so concrete builders only need to implement ``build()``.
+    """
 
-class _WhereClauseMixin:
-    """Methods that delegate to the internal ``_pattern: GraphPattern``."""
+    def __init__(self) -> None:
+        self._pattern = GraphPattern()
+        self._prefixes: dict[str, str] = {}
 
-    _pattern: GraphPattern
+    # ── prefix handling ──────────────────────────────────────────────
+
+    def prefix(self, name_or_ns: str | Namespace, uri: str | None = None) -> Any:
+        """Register a prefix.
+
+        - ``prefix("ex", "http://example.org/")`` — string pair
+        - ``prefix(ns)`` — extract from a ``Namespace`` object
+        """
+        if isinstance(name_or_ns, Namespace):
+            self._prefixes[name_or_ns.prefix] = name_or_ns.namespace.value
+        else:
+            if uri is None:
+                raise ValueError("uri is required when name_or_ns is a string")
+            self._prefixes[name_or_ns] = uri
+        return self
+
+    def _render_prefixes(self) -> str:
+        return "\n".join(f"PREFIX {k}: <{v}>" for k, v in self._prefixes.items())
+
+    # ── WHERE-clause delegation ──────────────────────────────────────
 
     def where(self, s: Term, p: Term, o: Term) -> Any:
         self._pattern.where(s, p, o)
@@ -52,45 +76,42 @@ class _WhereClauseMixin:
         self._pattern.sub_query(builder)
         return self
 
+    # ── common helpers ───────────────────────────────────────────────
 
-# ── prefix handling mixin ────────────────────────────────────────────
+    def _render_where(self, parts: list[str]) -> None:
+        """Append ``WHERE { … }`` to *parts* if patterns exist."""
+        if len(self._pattern) > 0:
+            parts.append("WHERE {")
+            parts.append(self._pattern.to_sparql())
+            parts.append("}")
 
+    def _build_parts(self) -> list[str]:
+        """Return the prefix lines (if any) as a starting list."""
+        parts: list[str] = []
+        if self._prefixes:
+            parts.append(self._render_prefixes())
+        return parts
 
-class _PrefixMixin:
-    """Shared prefix management."""
+    def copy(self):
+        return copy.deepcopy(self)
 
-    _prefixes: dict[str, str]
+    def build(self) -> str:
+        raise NotImplementedError
 
-    def prefix(self, name_or_ns: str | Namespace, uri: str | None = None) -> Any:
-        """Register a prefix.
-
-        - ``prefix("ex", "http://example.org/")`` — string pair
-        - ``prefix(ns)`` — extract from a ``Namespace`` object
-        """
-        if isinstance(name_or_ns, Namespace):
-            self._prefixes[name_or_ns.prefix] = name_or_ns.namespace.value
-        else:
-            if uri is None:
-                raise ValueError("uri is required when name_or_ns is a string")
-            self._prefixes[name_or_ns] = uri
-        return self
-
-    def _render_prefixes(self) -> str:
-        lines = [f"PREFIX {k}: <{v}>" for k, v in self._prefixes.items()]
-        return "\n".join(lines)
+    def __str__(self) -> str:
+        return self.build()
 
 
-# ── SelectQuery ──────────────────────────────────────────────────────
+# ── concrete builders ────────────────────────────────────────────────
 
 
-class SelectQuery(_WhereClauseMixin, _PrefixMixin):
+class SelectQuery(_QueryBase):
     """Builder for ``SELECT`` queries."""
 
     def __init__(self, *variables: str) -> None:
+        super().__init__()
         self._variables = list(variables)
         self._distinct = False
-        self._pattern = GraphPattern()
-        self._prefixes: dict[str, str] = {}
         self._order_by: list[str] = []
         self._group_by: list[str] = []
         self._having: str | None = None
@@ -121,31 +142,19 @@ class SelectQuery(_WhereClauseMixin, _PrefixMixin):
         self._offset = n
         return self
 
-    def copy(self) -> SelectQuery:
-        return copy.deepcopy(self)
-
     def build(self) -> str:
         if not self._variables:
             raise ValueError("SELECT query requires at least one variable")
         if len(self._pattern) == 0:
             raise ValueError("SELECT query requires at least one WHERE pattern")
 
-        parts: list[str] = []
+        parts = self._build_parts()
 
-        # prefixes
-        if self._prefixes:
-            parts.append(self._render_prefixes())
-
-        # SELECT line
         keyword = "SELECT DISTINCT" if self._distinct else "SELECT"
         parts.append(f"{keyword} {' '.join(self._variables)}")
 
-        # WHERE
-        parts.append("WHERE {")
-        parts.append(self._pattern.to_sparql())
-        parts.append("}")
+        self._render_where(parts)
 
-        # modifiers
         if self._group_by:
             parts.append(f"GROUP BY {' '.join(self._group_by)}")
         if self._having:
@@ -159,114 +168,57 @@ class SelectQuery(_WhereClauseMixin, _PrefixMixin):
 
         return "\n".join(parts)
 
-    def __str__(self) -> str:
-        return self.build()
 
-
-# ── AskQuery ─────────────────────────────────────────────────────────
-
-
-class AskQuery(_WhereClauseMixin, _PrefixMixin):
+class AskQuery(_QueryBase):
     """Builder for ``ASK`` queries."""
-
-    def __init__(self) -> None:
-        self._pattern = GraphPattern()
-        self._prefixes: dict[str, str] = {}
-
-    def copy(self) -> AskQuery:
-        return copy.deepcopy(self)
 
     def build(self) -> str:
         if len(self._pattern) == 0:
             raise ValueError("ASK query requires at least one WHERE pattern")
 
-        parts: list[str] = []
-        if self._prefixes:
-            parts.append(self._render_prefixes())
+        parts = self._build_parts()
         parts.append("ASK {")
         parts.append(self._pattern.to_sparql())
         parts.append("}")
         return "\n".join(parts)
 
-    def __str__(self) -> str:
-        return self.build()
 
-
-# ── ConstructQuery ───────────────────────────────────────────────────
-
-
-class ConstructQuery(_WhereClauseMixin, _PrefixMixin):
+class ConstructQuery(_QueryBase):
     """Builder for ``CONSTRUCT`` queries."""
 
     def __init__(self, *templates: tuple[Term, Term, Term]) -> None:
+        super().__init__()
         self._templates = list(templates)
-        self._pattern = GraphPattern()
-        self._prefixes: dict[str, str] = {}
-
-    def copy(self) -> ConstructQuery:
-        return copy.deepcopy(self)
 
     def build(self) -> str:
         if not self._templates:
             raise ValueError("CONSTRUCT query requires at least one template triple")
 
-        parts: list[str] = []
-        if self._prefixes:
-            parts.append(self._render_prefixes())
+        parts = self._build_parts()
 
-        # CONSTRUCT template
-        template_lines = []
+        parts.append("CONSTRUCT {")
         for s, p, o in self._templates:
-            template_lines.append(
+            parts.append(
                 f"  {serialize_term(s)} {serialize_term(p)} {serialize_term(o)} ."
             )
-        parts.append("CONSTRUCT {")
-        parts.extend(template_lines)
         parts.append("}")
 
-        # WHERE (optional for CONSTRUCT but we always emit it if patterns exist)
-        if len(self._pattern) > 0:
-            parts.append("WHERE {")
-            parts.append(self._pattern.to_sparql())
-            parts.append("}")
-
+        self._render_where(parts)
         return "\n".join(parts)
 
-    def __str__(self) -> str:
-        return self.build()
 
-
-# ── DescribeQuery ────────────────────────────────────────────────────
-
-
-class DescribeQuery(_WhereClauseMixin, _PrefixMixin):
+class DescribeQuery(_QueryBase):
     """Builder for ``DESCRIBE`` queries."""
 
     def __init__(self, *resources: Term) -> None:
+        super().__init__()
         self._resources = list(resources)
-        self._pattern = GraphPattern()
-        self._prefixes: dict[str, str] = {}
-
-    def copy(self) -> DescribeQuery:
-        return copy.deepcopy(self)
 
     def build(self) -> str:
         if not self._resources:
             raise ValueError("DESCRIBE query requires at least one resource")
 
-        parts: list[str] = []
-        if self._prefixes:
-            parts.append(self._render_prefixes())
-
-        resources_str = " ".join(serialize_term(r) for r in self._resources)
-        parts.append(f"DESCRIBE {resources_str}")
-
-        if len(self._pattern) > 0:
-            parts.append("WHERE {")
-            parts.append(self._pattern.to_sparql())
-            parts.append("}")
-
+        parts = self._build_parts()
+        parts.append(f"DESCRIBE {' '.join(serialize_term(r) for r in self._resources)}")
+        self._render_where(parts)
         return "\n".join(parts)
-
-    def __str__(self) -> str:
-        return self.build()

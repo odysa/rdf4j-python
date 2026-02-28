@@ -11,17 +11,19 @@ if TYPE_CHECKING:
     from ._builder import SelectQuery
 
 
-class GraphPattern:
-    """A composable block of SPARQL graph patterns (triples, filters, etc.).
+def _ensure_var(var: str) -> str:
+    """Prefix *var* with ``?`` if missing."""
+    return var if var.startswith("?") else f"?{var}"
 
-    Used as the body of a WHERE clause and inside OPTIONAL / UNION blocks.
+
+class GraphPattern:
+    """A composable block of SPARQL graph patterns.
+
     Every mutating method returns ``self`` for fluent chaining.
     """
 
     def __init__(self) -> None:
         self._elements: list[str] = []
-
-    # ── triple patterns ──────────────────────────────────────────────
 
     def where(self, s: Term, p: Term, o: Term) -> GraphPattern:
         """Add a triple pattern."""
@@ -30,19 +32,19 @@ class GraphPattern:
         )
         return self
 
-    # ── FILTER ───────────────────────────────────────────────────────
-
     def filter(self, expr: str) -> GraphPattern:
         """Add a ``FILTER(expr)`` clause."""
         self._elements.append(f"FILTER({expr})")
         return self
 
-    # ── OPTIONAL ─────────────────────────────────────────────────────
-
-    def optional(self, s_or_pattern: Term | GraphPattern, p: Term | None = None, o: Term | None = None) -> GraphPattern:
+    def optional(
+        self,
+        s_or_pattern: Term | GraphPattern,
+        p: Term | None = None,
+        o: Term | None = None,
+    ) -> GraphPattern:
         """Add an ``OPTIONAL { … }`` block.
 
-        Two calling conventions:
         - ``optional(s, p, o)`` — single triple shorthand
         - ``optional(GraphPattern())`` — complex pattern block
         """
@@ -51,12 +53,12 @@ class GraphPattern:
             self._elements.append(f"OPTIONAL {{\n{body}\n  }}")
         else:
             if p is None or o is None:
-                raise ValueError("optional() requires either a GraphPattern or three term arguments (s, p, o)")
+                raise ValueError(
+                    "optional() requires either a GraphPattern or three term arguments (s, p, o)"
+                )
             triple = f"{serialize_term(s_or_pattern)} {serialize_term(p)} {serialize_term(o)} ."
             self._elements.append(f"OPTIONAL {{ {triple} }}")
         return self
-
-    # ── UNION ────────────────────────────────────────────────────────
 
     def union(self, *patterns: GraphPattern) -> GraphPattern:
         """Add ``{ … } UNION { … }`` blocks."""
@@ -69,24 +71,16 @@ class GraphPattern:
         self._elements.append(" UNION ".join(parts))
         return self
 
-    # ── BIND ─────────────────────────────────────────────────────────
-
     def bind(self, expr: str, var: str) -> GraphPattern:
         """Add a ``BIND(expr AS ?var)`` clause."""
-        v = var if var.startswith("?") else f"?{var}"
-        self._elements.append(f"BIND({expr} AS {v})")
+        self._elements.append(f"BIND({expr} AS {_ensure_var(var)})")
         return self
-
-    # ── VALUES ───────────────────────────────────────────────────────
 
     def values(self, var: str, vals: list[Any]) -> GraphPattern:
         """Add a ``VALUES ?var { … }`` clause."""
-        v = var if var.startswith("?") else f"?{var}"
         serialized = " ".join(serialize_term(val) for val in vals)
-        self._elements.append(f"VALUES {v} {{ {serialized} }}")
+        self._elements.append(f"VALUES {_ensure_var(var)} {{ {serialized} }}")
         return self
-
-    # ── sub-query ────────────────────────────────────────────────────
 
     def sub_query(self, builder: SelectQuery) -> GraphPattern:
         """Embed a sub-SELECT inside this pattern."""
@@ -94,8 +88,6 @@ class GraphPattern:
         indented = "\n".join(f"    {line}" for line in inner.splitlines())
         self._elements.append(f"{{\n{indented}\n  }}")
         return self
-
-    # ── rendering ────────────────────────────────────────────────────
 
     def to_sparql(self, indent: int = 2) -> str:
         """Render the pattern body (without the outer braces)."""
