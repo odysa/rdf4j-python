@@ -20,6 +20,12 @@ dev = [
 ]
 docs = ["furo>=2024.8.6", "sphinx>=8"]
 
+[tool]
+rye = { dev-dependencies = [
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+] }
+
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
 branch = "main"

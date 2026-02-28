@@ -6,6 +6,7 @@ from .repo_exception import (
     NamespaceException,
     NetworkError,
     QueryError,
+    QueryTypeMismatchError,
     Rdf4jError,
     RepositoryCreationException,
     RepositoryDeletionException,
@@ -28,6 +29,7 @@ __all__ = [
     "NamespaceException",
     "NetworkError",
     "QueryError",
+    "QueryTypeMismatchError",
     "TransactionError",
     "TransactionStateError",
 ]
